@@ -1,0 +1,21 @@
+{
+  "name": "vendfit-server",
+  "version": "0.0.1",
+  "description": "Server for VendFit App and Machine Communication",
+  "contributors": [
+        {
+          "name": "Tyler Gauch",
+          "email": "gaucht@wit.edu"
+        },
+        {
+          "name": "Chris Allen",
+          "email": "allenc4@wit.edu"
+        }
+  ],
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "net": "*"
+  }
+}
