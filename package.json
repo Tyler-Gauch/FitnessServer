@@ -13,7 +13,7 @@
         }
   ],
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
     "start-on-server": "node src/server.js > /var/log/vendfit/normal.log 2> /var/log/vendfit/error.log"
   },
   "dependencies": {
