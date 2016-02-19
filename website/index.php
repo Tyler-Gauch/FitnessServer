@@ -4,7 +4,7 @@
 		<link rel="stylesheet" href="/css/bootstrap.min.css"/>
 		<link rel="stylesheet" href="/css/bootstrap-theme.min.css"/>
 		<style>
-			body{
+			body.container{
 				padding-top: 70px;
 			}
 		</style>
