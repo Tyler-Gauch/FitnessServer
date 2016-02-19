@@ -1,0 +1,69 @@
+<html>
+	<head>
+		<title>VendFit Help</title>
+		<style>
+			pre {
+				text-align: left;
+				white-space: pre-line;
+			}
+
+			.jsonkey {
+				text-decoration: none;
+				text-decoration-color: #f00;
+			}
+			.jsonstring{
+				text-decoration: none;
+				text-decoration-color: #0f0;
+			}
+			.jsonnum{
+				text-decoration: none;
+				text-decoration-color: #00f;
+			}
+			.jsoncomment{
+				text-decoration: none;
+				text-decoration-color: #ff0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<ul>
+			<li>User Options</li>
+		</ul>
+
+		<div>
+			<div><strong>User Options</strong></div>
+			<div>
+				<ul>
+					<li>
+						<div>
+							<div>user_create</div>
+							<div>
+								Body should be in following format
+								<div>
+								<hr>
+								<div>
+									<div>{</div>
+										<div><span class="jsonkey">"operation"</span>: <span class="jsonstring">"user_create"</span>,</div>
+										<div><span class="jsonkey">"data"</span>: {</div>
+											<div><span class="jsonkey">"fitbit_id"</span>: <span class="jsonstring">"FITBITID"</span>,	<span class="jsoncomment">//required</span></div>
+											<div>"access_token": "ACCESSTOKEN", 	//required</div>
+											<div>"total_steps": 100, 			//any number optional</div>
+											<div>"steps_spent_today": 100 		//any number optional</div>
+										<div>}</div>
+									<div>}</div>
+								</div>
+								<hr>
+								</div>
+							</div>
+						</div>
+					</li>
+					<li>user_update</li>
+					<li>user_basic</li>
+					<li>user_all</li>
+				</ul>
+			<div>
+		</div>
+	</body>
+
+</html>
