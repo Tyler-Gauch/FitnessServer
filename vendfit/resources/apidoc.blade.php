@@ -1,3 +1,3 @@
 @section('content')
-Welcome To VendFit
+	API Doc!!!!
 @stop
