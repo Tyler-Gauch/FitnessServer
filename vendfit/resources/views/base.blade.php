@@ -28,7 +28,7 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
-            <li><a href="apiDoc.php">API Doc</a></li>
+            <li><a href="apidoc">API Doc</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
           </ul>
@@ -36,7 +36,7 @@
       </div><!-- /.container-fluid -->
     </nav>
         <div class="container">
-        @yield('content');
+        @yield('content')
         </div>
     </body>
 </html>
