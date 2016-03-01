@@ -17,7 +17,7 @@ var server = net.createServer(function(socket){
 		}
 	});
 
-	socket.on("common.END", function(){
+	socket.on("end", function(){
 		console.log("Client left :(");
 	});
 });
