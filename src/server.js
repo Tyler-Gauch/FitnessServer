@@ -1,6 +1,7 @@
 var net = require('net');
 var common = require("./common")();
 var user = require("./userFunctions");
+var item = require("./itemFunctions");
 
 var server = net.createServer(function(socket){
 	console.log("Client connected");
@@ -58,41 +59,90 @@ var processInput = function(data, socket){
 		{
 			response.success = false;
 			response.message = "The 'operation' field is required";
-			common.returnJsonResponse(isHttp, socket, response, common.HttpCode.OK);
+			//common.returnJsonResponse(isHttp, socket, response, common.HttpCode.OK);
 		}
 		else if(common.checkValue(json.data) == null)
 		{
-			common.returnJsonResponse(isHttp, socket, {
-				success: false,
-				message: "'data' is required."
-			}, common.HttpCode.OK);
+			response.success = false;
+			response.message = "'data' is required";
+			// common.returnJsonResponse(isHttp, socket, {
+			// 	success: false,
+			// 	message: "'data' is required."
+			// }, common.HttpCode.OK);
 		}
-		else if(json.operation.indexOf("user_") > -1 && !isHttp)
+		else if (json.operation.indexOf("user_") > -1 && isHttp)
 		{
-			common.returnJsonResponse(isHttp, socket, {
-				success: false, 
-				message: "Function not available."
-			}, common.HttpCode.OK);
+			if(json.operation == "user_basic")
+			{
+				user.viewbasic(json.data, isHttp, socket);
+			}
+			else if(json.operation == "user_all")
+			{
+				user.viewall(json.data, isHttp, socket);
+			}
+			else if(json.operation == "user_create" || json.operation == "user_add")
+			{
+				user.create(json.data, isHttp, socket);
+			}
+			else if(json.operation == "user_update")
+			{
+				user.update(json.data, isHttp, socket);
+			}
+			else
+			{
+				response.success = false;
+				response.message = "Function not available";
+			}
+
 		}
-		else if(json.operation == "user_basic")
+		else if (json.operation.indexOf("item_") > -1 && isHttp)
 		{
-			user.viewbasic(json.data, isHttp, socket);
-		}else if(json.operation == "user_all")
-		{
-			user.viewall(json.data, isHttp, socket);
-		}else if(json.operation == "user_create")
-		{
-			user.create(json.data, isHttp, socket);
-		}else if(json.operation == "user_update")
-		{
-			user.update(json.data, isHttp, socket);
+			if (json.operation == "item_all")
+			{
+				item.viewall(json.data, isHttp, socket);
+			}
+			else
+			{
+				response.success = false;
+				response.message = "Function not available";
+			}
 		}
 		else
 		{
 			response.success = false;
 			response.message = "Invalid operation '"+json.operation+"'";
+		}
+
+		if (!response.success) 
+		{
 			common.returnJsonResponse(isHttp, socket, response, common.HttpCode.OK);
 		}
+		// else if(json.operation.indexOf("user_") > -1 && !isHttp)
+		// {
+		// 	common.returnJsonResponse(isHttp, socket, {
+		// 		success: false, 
+		// 		message: "Function not available."
+		// 	}, common.HttpCode.OK);
+		// }
+		// else if(json.operation == "user_basic")
+		// {
+		// 	user.viewbasic(json.data, isHttp, socket);
+		// }else if(json.operation == "user_all")
+		// {
+		// 	user.viewall(json.data, isHttp, socket);
+		// }else if(json.operation == "user_create")
+		// {
+		// 	user.create(json.data, isHttp, socket);
+		// }else if(json.operation == "user_update")
+		// {
+		// 	user.update(json.data, isHttp, socket);
+		// }
+		// else
+		// {
+		// 	response.success = false;
+		// 	response.message = "Invalid operation '"+json.operation+"'";
+		// 	common.returnJsonResponse(isHttp, socket, response, common.HttpCode.OK);
+		// }
 	}catch(e)
 	{
 		//invlaid json

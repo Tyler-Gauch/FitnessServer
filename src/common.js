@@ -10,7 +10,8 @@ module.exports = function(){
 		connection: mysql.createConnection({
 			host: "127.0.0.1",
 			user: "root",
-			password: "P@ssword1"
+			password: "P@ssword1",
+			database: "vendfit"
 		}),
 
 		returnJsonResponse: function(isHttp, socket, json, status){
