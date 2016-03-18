@@ -5,8 +5,13 @@ module.exports = {
 	{
 		if(common.checkValue(data.id) == null)
 		{
+
+			if (socket == null) {
+				return null;
+			}
+
 			common.returnJsonResponse(isHttp, socket, {
-				success: false, 
+				success: false,
 				message: "'data.id' is required"
 			}, common.HttpCode.OK);
 		}else{
@@ -17,6 +22,10 @@ module.exports = {
 			common.connection.query(query, function(err, result){
 				if(err)
 				{
+					if (socket == null) {
+						return null;
+					}
+
 					console.error("Mysql Error");
 					console.error(err);
 					common.returnJsonResponse(isHttp, socket, {
@@ -25,6 +34,10 @@ module.exports = {
 					}, common.HttpCode.OK);
 				}else
 				{
+					if (socket == null) {
+						return result[0];
+					}
+
 					console.log(result);
 					common.returnJsonResponse(isHttp, socket, {
 						success: true,
@@ -139,7 +152,12 @@ module.exports = {
 		}else{
 			var id = data.id;
 			delete data.id;
-			var query = "UPDATE vendfit.user SET ? WHERE id='"+id+"' OR fitbit_id='"+id+"'";
+			if (typeof(id) == 'number') {
+				var query = "UPDATE vendfit.user SET ? WHERE id='"+id+"' OR fitbit_id='"+id+"'";
+			} else {
+				var query = "UPDATE vendfit.user SET ? WHERE fitbit_id='"+id+"'";
+
+			}
 			common.connection.query(query, data, function(err, result){
 				if(err)
 				{
@@ -159,4 +177,5 @@ module.exports = {
 			});
 		}
 	}
+
 }
