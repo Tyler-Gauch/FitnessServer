@@ -15,7 +15,6 @@ module.exports = function(){
 		}),
 
 		returnJsonResponse: function(isHttp, socket, json, status){
-
 			var jsonString = JSON.stringify(json);
 
 			if(isHttp)

@@ -1,18 +1,20 @@
 var common = require("./common.js")();
 
 module.exports = {
-	viewbasic: function(data, isHttp, socket)
+	viewbasic: function(data, isHttp, socket, callback)
 	{
 		if(common.checkValue(data.id) == null)
 		{
 
-			if (socket == null) {
-				return null;
+			var err = "'data.id' is required";
+
+			if (callback) {
+				callback(err, null);
 			}
 
 			common.returnJsonResponse(isHttp, socket, {
 				success: false,
-				message: "'data.id' is required"
+				message: err
 			}, common.HttpCode.OK);
 		}else{
 			var query = "SELECT access_token, total_steps - steps_spent_today as current_balance";
@@ -22,27 +24,29 @@ module.exports = {
 			common.connection.query(query, function(err, result){
 				if(err)
 				{
-					if (socket == null) {
-						return null;
-					}
-
 					console.error("Mysql Error");
 					console.error(err);
-					common.returnJsonResponse(isHttp, socket, {
-						success: false,
-						message: "An Unkown error occured"
-					}, common.HttpCode.OK);
+
+					if (callback) {
+						callback(err, null);
+					} else {
+						common.returnJsonResponse(isHttp, socket, {
+							success: false,
+							message: "An Unkown error occured"
+						}, common.HttpCode.OK);
+					}
 				}else
 				{
-					if (socket == null) {
-						return result[0];
-					}
+					//console.log(result);
 
-					console.log(result);
-					common.returnJsonResponse(isHttp, socket, {
-						success: true,
-						data: result[0]
-					}, common.HttpCode.OK);
+					if (callback) {
+						callback(null, result[0]);
+					} else {
+						common.returnJsonResponse(isHttp, socket, {
+							success: true,
+							data: result[0]
+						}, common.HttpCode.OK);
+					}
 				}
 			});
 		}
