@@ -50,11 +50,11 @@ var common = require("./common.js")();
 var user   = require("./userFunctions");
 var Q      = require("q");
 module.exports = {
-	viewall: function(data, isHttp, socket)
+	viewall: function(data, socket)
 	{
 		if(common.checkValue(data.id) == null)
 		{
-			common.returnJsonResponse(isHttp, socket, {
+			common.returnJsonResponse(socket, {
 				success: false, 
 				message: "'data.id' is required for the vending machine ID"
 			}, common.HttpCode.OK);
@@ -69,7 +69,7 @@ module.exports = {
 			{
 				console.error("Mysql Error");
 				console.error(err);
-				common.returnJsonResponse(isHttp, socket, {
+				common.returnJsonResponse(socket, {
 					success: false,
 					message: "Error occured: " + err
 				}, common.HttpCode.OK);
@@ -79,14 +79,14 @@ module.exports = {
 				console.log(result);
 				if(common.checkValue(result[0]) == null)
 				{
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: false,
 						message: "Vending machine with id '"+data.id+"' does not exist."
 					}, common.HttpCode.OK);	
 				}
 				else
 				{
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: true,
 						data: result
 					}, common.HttpCode.OK);
@@ -96,7 +96,7 @@ module.exports = {
 
 	},
 
-	purchase: function(data, isHttp, socket) 
+	purchase: function(data, socket) 
 	{
 		var user_id = null;
 
@@ -110,7 +110,7 @@ module.exports = {
 			common.checkValue(data.vending_machine_id) == null ||
 			user_id == null)
 		{
-			common.returnJsonResponse(isHttp, socket, {
+			common.returnJsonResponse(socket, {
 				success: false,
 				message: "'data.item_id', 'data.vending_machine_id', and ('data.fitbit_id' OR 'data.user_id') are required to make a purchase"
 			}, common.HttpCode.OK);
@@ -134,7 +134,7 @@ module.exports = {
 				} else {
 					console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
 					// If anything is rejected, send the error response back to the client and return
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: false,
 						message: result.reason
 					}, common.HttpCode.OK);
@@ -155,7 +155,7 @@ module.exports = {
 			// Check if user has enough balance to make purchase
 			if (userInfo.current_balance < itemInfo.cost) {
 				console.log("Not enough points");
-				common.returnJsonResponse(isHttp, socket, {
+				common.returnJsonResponse(socket, {
 					success: false,
 					message: "Not enough points for purchase. User has " + userInfo.current_balance + " points and needs " + itemInfo.cost + " points for purchase"
 				}, common.HttpCode.OK);
@@ -164,7 +164,7 @@ module.exports = {
 
 			// Check to make sure item is in stock in desired vending machine
 			if (vendingItemInfo.stock < 1) {
-				common.returnJsonResponse(isHttp, socket, {
+				common.returnJsonResponse(socket, {
 					success: false,
 					message: "Item id '" + data.item_id + "' is out of stock in vending machine '" + data.vending_machine_id + "'"
 				}, common.HttpCode.OK);
@@ -190,7 +190,7 @@ module.exports = {
 					} else {
 						console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
 						// If anything is rejected, send the error response back to the client and return
-						common.returnJsonResponse(isHttp, socket, {
+						common.returnJsonResponse(socket, {
 							success: false,
 							message: result.reason
 						}, common.HttpCode.OK);
@@ -198,7 +198,7 @@ module.exports = {
 					}
 
 					// If we made it here, everything was successful 
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: true
 					}, common.HttpCode.OK);
 				});

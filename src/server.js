@@ -144,7 +144,7 @@ var processInput = function(data, socket){
 
 		if (!response.success) 
 		{
-			common.returnJsonResponse(isHttp, socket, response, common.HttpCode.OK);
+			common.returnJsonResponse(socket, response, common.HttpCode.OK);
 		}
 		// else if(json.operation.indexOf("user_") > -1 && !isHttp)
 		// {
@@ -180,7 +180,7 @@ var processInput = function(data, socket){
 		console.error(e);
 		var json = {success: false, message: "Invalid Json"};
 		//scommon.END Response
-		common.returnJsonResponse(isHttp, socket, json, common.HttpCode.OK);
+		common.returnJsonResponse(socket, json, common.HttpCode.OK);
 	}
 }
 
