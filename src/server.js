@@ -121,7 +121,7 @@ var processInput = function(data, socket){
 		}
 		else if(json.operation.indexOf("machine_") > -1 && !socket.isHttp)
 		{
-			if(json.operation == "registration")
+			if(json.operation == "machine_registration")
 			{
 				if(json.data.identifer != null)
 				{
@@ -129,7 +129,7 @@ var processInput = function(data, socket){
 					machineSockets[socket.identifer] = socket;
 				}
 				machine.registration(json.data);
-			}else if(json.operation == "checkin")
+			}else if(json.operation == "machine_checkin")
 			{
 				machine.checkin(json.data);
 			}else{
