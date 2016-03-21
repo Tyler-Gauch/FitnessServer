@@ -30,8 +30,10 @@ CREATE TABLE vendfit.item(
 CREATE TABLE vendfit.vending_machine(
 	id INT NOT NULL AUTO_INCREMENT,
 	state INT,
+	identifier VARCHAR(64) NOT NULL UNIQUE,
 	last_checkin_date DATETIME,
-	PRIMARY KEY (id)
+	PRIMARY KEY (id),
+	UNIQUE KEY vending_machine_identifer_unique(identifier)
 );
 
 CREATE TABLE vendfit.item_vending_machine(

@@ -2,6 +2,7 @@ var net = require('net');
 var common = require("./common")();
 var user = require("./userFunctions");
 var item = require("./itemFunctions");
+var machine = require("./machineFunctions");
 
 var machineSockets = {};
 
