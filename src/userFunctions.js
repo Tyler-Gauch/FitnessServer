@@ -10,6 +10,7 @@ module.exports = {
 
 			if (callback) {
 				callback(err, null);
+				return;
 			}
 
 			common.returnJsonResponse(isHttp, socket, {
@@ -19,52 +20,67 @@ module.exports = {
 		}else{
 			var query = "SELECT access_token, total_steps - steps_spent_today as current_balance";
 				query += " FROM vendfit.user";
-				query += " WHERE id='"+data.id+"'";
-				query += " OR fitbit_id='"+data.id+"'";
+				query += " WHERE fitbit_id='" + data.id + "'";
+
+			if (typeof(data.id) == 'number') {
+				query += "OR id='" + id +"'";
+			} 
+
+			if (callback) {
+				common.connection.query(query, callback);
+				return;
+			}
+
 			common.connection.query(query, function(err, result){
 				if(err)
 				{
 					console.error("Mysql Error");
 					console.error(err);
 
-					if (callback) {
-						callback(err, null);
-					} else {
-						common.returnJsonResponse(isHttp, socket, {
-							success: false,
-							message: "An Unkown error occured"
-						}, common.HttpCode.OK);
-					}
+					common.returnJsonResponse(isHttp, socket, {
+						success: false,
+						message: "An Unkown error occured"
+					}, common.HttpCode.OK);
 				}else
 				{
-					//console.log(result);
-
-					if (callback) {
-						callback(null, result[0]);
-					} else {
-						common.returnJsonResponse(isHttp, socket, {
-							success: true,
-							data: result[0]
-						}, common.HttpCode.OK);
-					}
+					common.returnJsonResponse(isHttp, socket, {
+						success: true,
+						data: result[0]
+					}, common.HttpCode.OK);
 				}
 			});
 		}
 	},
 
-	viewall: function(data, isHttp, socket)
+	viewall: function(data, isHttp, socket, callback)
 	{
 		if(common.checkValue(data.id) == null)
 		{
+			var err = "'data.id' is required";
+
+			if (callback) {
+				callback(err, null);
+				return;
+			}
+
 			common.returnJsonResponse(isHttp, socket, {
 				success: false, 
-				message: "'data.id' is required"
+				message: err
 			}, common.HttpCode.OK);
 		}else{
 			var query = "SELECT id, access_token, fitbit_id, total_steps, steps_spent_today, total_steps - steps_spent_today as current_balance";
 				query += " FROM vendfit.user";
-				query += " WHERE id='"+data.id+"'";
-				query += " OR fitbit_id='"+data.id+"'";
+				query += " WHERE fitbit_id='" + data.id + "'";
+
+			if (typeof(data.id) == 'number') {
+				query += "OR id='" + id +"'";
+			} 
+
+			if (callback) {
+				common.connection.query(query, callback);
+				return;
+			}
+
 			common.connection.query(query, function(err, result){
 				if(err)
 				{
@@ -145,13 +161,20 @@ module.exports = {
 		}
 	},
 
-	update: function(data, isHttp, socket)
+	update: function(data, isHttp, socket, callback)
 	{
 		if(common.checkValue(data.id) == null)
 		{
+			var err = "'data.id' is required";
+
+			if (callback) {
+				callback(err, null);
+				return;
+			}
+
 			common.returnJsonResponse(isHttp, socket, {
 				success: false, 
-				message: "'data.id' is required"
+				message: err
 			}, common.HttpCode.OK);
 		}else{
 			var id = data.id;
@@ -160,8 +183,13 @@ module.exports = {
 				var query = "UPDATE vendfit.user SET ? WHERE id='"+id+"' OR fitbit_id='"+id+"'";
 			} else {
 				var query = "UPDATE vendfit.user SET ? WHERE fitbit_id='"+id+"'";
-
 			}
+
+			if (callback) {
+				common.connection.query(query, data, callback);
+				return;
+			}
+
 			common.connection.query(query, data, function(err, result){
 				if(err)
 				{

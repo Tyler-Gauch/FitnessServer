@@ -123,13 +123,6 @@ module.exports = {
 			// Vend
 				// Update stock count
 				// Update user steps taken today
-		getUserInfo(user_id)
-		.then (function(results) {
-			console.log(results);
-		}, function(error) {
-			console.log(error);
-		});
-
 		Q.allSettled([
 			getUserInfo(user_id),
 			getItemCost(data.item_id),
@@ -140,14 +133,20 @@ module.exports = {
 					console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
 				} else {
 					console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
+					// If anything is rejected, send the error response back to the client and return
+					common.returnJsonResponse(isHttp, socket, {
+						success: false,
+						message: result.reason
+					}, common.HttpCode.OK);
+					return;
 				}
 			});
 
-			// results[0] contains {access_token, current_balance} at results[0][0]
+			// results[0] contains {id, access_token, fitbit_id, total_steps, steps_spent_today, current_balance} at results[0][0][0]
 			// results[1] contains {cost} at results[1][0][0]
 			// results[2] contains {id, item_id, vending_machine_id, stock} at results[2][0][0]
 
-			var userInfo = results[0].value;
+			var userInfo = results[0].value[0][0];
 			var itemInfo = results[1].value[0][0];
 			var vendingItemInfo = results[2].value[0][0];
 
@@ -177,13 +176,39 @@ module.exports = {
 				// Update stock count
 				// Update user steps taken today
 
+			// TODO - Vend here and perform below AFTER receive success message from vend
 
+			// Update stock count and update user steps taken today
+			Q.allSettled([
+				updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
+				updateUser({id: user_id,
+							steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
+			]).then(function (results) {
+				results.forEach(function (result) {
+					if (result.state === "fulfilled") {
+						console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
+					} else {
+						console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
+						// If anything is rejected, send the error response back to the client and return
+						common.returnJsonResponse(isHttp, socket, {
+							success: false,
+							message: result.reason
+						}, common.HttpCode.OK);
+						return;
+					}
+
+					// If we made it here, everything was successful 
+					common.returnJsonResponse(isHttp, socket, {
+						success: true
+					}, common.HttpCode.OK);
+				});
+			});
 
 		});
 
 		function getUserInfo(user_id) {
 			var deferred = Q.defer();
-			user.viewbasic({id: user_id}, null, null, deferred.makeNodeResolver());
+			user.viewall({id: user_id}, null, null, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
 
@@ -200,146 +225,19 @@ module.exports = {
 			return deferred.promise;
 		}
 
-
-
-		// // First, check to ensure the user has enough balance to make the purchase
-		// var userInfo = user.viewbasic({id: user_id});
-		// if (userInfo == null) {
-		// 	common.returnJsonResponse(isHttp, socket, {
-		// 		success: false,
-		// 		message: "User with id '" + user_id + "' not found"
-		// 	}, common.HttpCode.OK);
-		// }
-
-		// var itemCost = 0;
-
-		// // Get the cost of the item
-		// common.connection.query("SELECT cost from item where id = '" + data.item_id + "'", function(err, result) {
-		// 	if (err)
-		// 	{
-		// 		common.returnJsonResponse(isHttp, socket, {
-		// 			success: false,
-		// 			message: "Error occured: " + err
-		// 		}, common.HttpCode.OK);
-		// 		return;
-		// 	}
-		// 	else if (common.checkValue(result) == null)
-		// 	{
-		// 		common.returnJsonResponse(isHttp, socket, {
-		// 			success: false,
-		// 			message: "Item with id '" + data.item_id + "' does not exist"
-		// 		}, common.HttpCode.OK);
-		// 		return;
-		// 	}
-
-		// 	itemCost = result.cost;
-		// });
-
-		// if (userInfo.current_balance < itemCost) {
-		// 	common.returnJsonResponse(isHttp, socket, {
-		// 		success: false,
-		// 		message: "Not enough points for purchase. User has " + userInfo.current_balance + " points and needs " + itemCost + " points for purchase"
-		// 	}, common.HttpCode.OK);
-		// 	return;
-		// } 
-
-		// // If the user has enough points, check to ensure the item is in stock in the desired vending machine
-		// var query = "SELECT id, item_id, vending_machine_id, stock FROM item_vending_machine WHERE vending_machine_id = '" + data.vending_machine_id + "' AND item_id = '" + data.item_id + "'";
-		// common.connection.query(query, function(err, result) {
-		// 	if(err)
-		// 	{
-		// 		console.error("Mysql Error");
-		// 		console.error(err);
-		// 		common.returnJsonResponse(isHttp, socket, {
-		// 			success: false,
-		// 			message: "Error occured: " + err
-		// 		}, common.HttpCode.OK);
-		// 		return;
-		// 	}
-		// 	else if (common.checkValue(result) == null)
-		// 	{
-		// 		common.returnJsonResponse(isHttp, socket, {
-		// 			success: false,
-		// 			message: "Item with id '" + data.item_id + "' does not exist in vending machine '" + data.vending_machine_id + "'"
-		// 		}, common.HttpCode.OK);
-		// 		return;
-		// 	}
-
-		// 	console.log(result);
-
-		// 	if (result.stock < 1) {
-		// 		common.returnJsonResponse(isHttp, socket, {
-		// 			success: false,
-		// 			message: "Item id '" + data.item_id + "' is out of stock in vending machine '" + data.vending_machine_id + "'"
-		// 		}, common.HttpCode.OK);
-		// 		return;
-		// 	}
-
-		// 	// TODO - Send request to the desired id to vend the particular item id
-		// 	// Perform below if successful vend
-
-		// 	// Update stock count
-		// 	this.updateItemVendingMachine({
-		// 		id: data.id,
-		// 		stock: result.stock - 1
-		// 	});
-
-		// 	// Update user step count
-		// 	user.update({
-		// 		id: userInfo.id,
-		// 		steps_spent_today: userInfo.steps_spent_today + itemCost
-
-		// 	}, isHttp, socket);
-
-		// });
-	},
-
-	updateItemVendingMachine: function(data, isHttp, socket) {
-		if(common.checkValue(data.id) == null)
-		{
-			if (socket == null) {
-				return;
-			}
-			common.returnJsonResponse(isHttp, socket, {
-				success: false,
-				message: "'data.id' is required"
-			}, common.HttpCode.OK);
+		function updateItemStockCount(vending_machine_id, item_id, stock) {
+			var deferred = Q.defer();
+			var query = "UPDATE vendfit.item_vending_machine SET stock='" + stock + "' WHERE item_id='"+item_id+"' AND vending_machine_id='" + vending_machine_id + "'";
+			common.connection.query(query, deferred.makeNodeResolver());
+			return deferred.promise;
 		}
-		else
-		{
-			var id = data.id;
-			delete data.id;
-			var query = "UPDATE vendfit.item_vending_machine SET ? WHERE id='"+id+"'";
 
-			common.connection.query(query, data, function(err, result){
-				if(err)
-				{
-					console.error("Mysql Error");
-					console.error(err);
-
-					if (socket == null) {
-						return;
-					}
-
-					common.returnJsonResponse(isHttp, socket, {
-						success: false,
-						message: "An unkown error occured"
-					}, common.HttpCode.OK);
-				}
-				else
-				{
-					console.log(result);
-
-					if (socket == null) {
-						return;
-					}
-
-					common.returnJsonResponse(isHttp, socket, {
-						success: true,
-					}, common.HttpCode.OK);
-				}
-			});
+		function updateUser(json) {
+			var deferred = Q.defer();
+			user.update(json, null, null, deferred.makeNodeResolver());
+			return deferred.promise;
 		}
-	}
+
+	}  // End purchase() 
 
 }
