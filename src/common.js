@@ -15,10 +15,13 @@ module.exports = function(){
 			database: "vendfit"
 		}),
 
-		returnJsonResponse: function(isHttp, socket, json, status){
+		returnJsonResponse: function(socket, json, status){
 			var jsonString = JSON.stringify(json);
 
-			if(isHttp)
+			console.log("Sending: ");
+			console.log(jsonString);
+
+			if(socket.isHttp)
 			{
 				socket.write("HTTP/1.1 " + status+ "\n");
 				socket.write("Content-Type: application/json\n");

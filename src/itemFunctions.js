@@ -44,14 +44,15 @@
 
 var common = require("./common.js")();
 var user   = require("./userFunctions");
+var machine = require("./machineFunctions");
 var Q      = require("q");
 
 module.exports = {
-	viewall: function(data, isHttp, socket)
+	viewall: function(data, socket)
 	{
 		if(common.checkValue(data.id) == null)
 		{
-			common.returnJsonResponse(isHttp, socket, {
+			common.returnJsonResponse(socket, {
 				success: false, 
 				message: "'data.id' is required for the vending machine ID"
 			}, common.HttpCode.OK);
@@ -66,7 +67,7 @@ module.exports = {
 			{
 				console.error("Mysql Error");
 				console.error(err);
-				common.returnJsonResponse(isHttp, socket, {
+				common.returnJsonResponse(socket, {
 					success: false,
 					message: "Error occured: " + err
 				}, common.HttpCode.OK);
@@ -76,14 +77,14 @@ module.exports = {
 				console.log(result);
 				if(common.checkValue(result[0]) == null)
 				{
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: false,
 						message: "Vending machine with id '"+data.id+"' does not exist."
 					}, common.HttpCode.OK);	
 				}
 				else
 				{
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: true,
 						data: result
 					}, common.HttpCode.OK);
@@ -93,8 +94,9 @@ module.exports = {
 
 	},
 
-	purchase: function(data, isHttp, socket) 
+	purchase: function(data, socket) 
 	{
+		console.log(data);
 		var user_id = null;
 
 		if (common.checkValue(data.user_id) != null) {
@@ -107,12 +109,14 @@ module.exports = {
 			common.checkValue(data.vending_machine_id) == null ||
 			user_id == null)
 		{
-			common.returnJsonResponse(isHttp, socket, {
+			common.returnJsonResponse(socket, {
 				success: false,
 				message: "'data.item_id', 'data.vending_machine_id', and ('data.fitbit_id' OR 'data.user_id') are required to make a purchase"
 			}, common.HttpCode.OK);
 			return;
 		} 
+
+		console.log("1");
 
 		// Check to ensure user has enough balance to make purchase
 		// Get the cost of desired item
@@ -125,19 +129,21 @@ module.exports = {
 			getItemCost(data.item_id),
 			getVendingItemInfo(data.vending_machine_id, data.item_id)
 		]).then(function (results) {
+			console.log("2");
 			results.forEach(function (result) {
 				if (result.state === "fulfilled") {
 					console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
 				} else {
 					console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
 					// If anything is rejected, send the error response back to the client and return
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: false,
 						message: result.reason
 					}, common.HttpCode.OK);
 					return;
 				}
 			});
+
 
 			// results[0] contains {id, access_token, fitbit_id, total_steps, steps_spent_today, current_balance} at results[0][0][0]
 			// results[1] contains {cost} at results[1][0][0]
@@ -152,7 +158,7 @@ module.exports = {
 			// Check if user has enough balance to make purchase
 			if (userInfo.current_balance < itemInfo.cost) {
 				console.log("Not enough points");
-				common.returnJsonResponse(isHttp, socket, {
+				common.returnJsonResponse(socket, {
 					success: false,
 					message: "Not enough points for purchase. User has " + userInfo.current_balance + " points and needs " + itemInfo.cost + " points for purchase"
 				}, common.HttpCode.OK);
@@ -161,7 +167,8 @@ module.exports = {
 
 			// Check to make sure item is in stock in desired vending machine
 			if (vendingItemInfo.stock < 1) {
-				common.returnJsonResponse(isHttp, socket, {
+				console.log("out of stock");
+				common.returnJsonResponse(socket, {
 					success: false,
 					message: "Item id '" + data.item_id + "' is out of stock in vending machine '" + data.vending_machine_id + "'"
 				}, common.HttpCode.OK);
@@ -175,37 +182,52 @@ module.exports = {
 
 			// TODO - Vend here and perform below AFTER receive success message from vend
 
-			// Update stock count and update user steps taken today
-			Q.allSettled([
-				updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
-				updateUser({id: user_id,
-							steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
-			]).then(function (results) {
-				results.forEach(function (result) {
-					if (result.state === "fulfilled") {
-						console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
-					} else {
-						console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
-						// If anything is rejected, send the error response back to the client and return
-						common.returnJsonResponse(isHttp, socket, {
-							success: false,
-							message: result.reason
-						}, common.HttpCode.OK);
-						return;
-					}
+			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
+			machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = true;
+
+			machine.sockets[vendingItemInfo.identifier].onVendResponse = function(response){
+
+				machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = false;
+
+				if(!response.success)
+				{
+					common.returnJsonResponse(socket, {
+						success: false
+					}, common.HttpCode.OK);
+					return;
+				}
+				// Update stock count and update user steps taken today
+				Q.allSettled([
+					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
+					updateUser({id: user_id,
+								steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
+				]).then(function (results) {
+					results.forEach(function (result) {
+						if (result.state === "fulfilled") {
+							console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
+						} else {
+							console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
+							// If anything is rejected, send the error response back to the client and return
+							common.returnJsonResponse(socket, {
+								success: false,
+								message: result.reason
+							}, common.HttpCode.OK);
+							return;
+						}
+					});
 
 					// If we made it here, everything was successful 
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: true
 					}, common.HttpCode.OK);
-				});
-			});
 
-		});
+				}).done();
+			}
+		}).done();
 
 		function getUserInfo(user_id) {
 			var deferred = Q.defer();
-			user.viewall({id: user_id}, null, null, deferred.makeNodeResolver());
+			user.viewall({id: user_id}, null, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
 
@@ -217,7 +239,7 @@ module.exports = {
 
 		function getVendingItemInfo(vending_machine_id, item_id) {
 			var deferred = Q.defer();
-			var query = "SELECT id, item_id, vending_machine_id, stock FROM item_vending_machine WHERE vending_machine_id = '" + data.vending_machine_id + "' AND item_id = '" + data.item_id + "'";
+			var query = "SELECT iv.id, iv.item_id, iv.vending_machine_id, iv.stock, v.identifier, i.vend_id FROM item_vending_machine iv INNER JOIN vending_machine v ON iv.vending_machine_id = v.id INNER JOIN item i ON i.id = iv.item_id WHERE vending_machine_id = '" + data.vending_machine_id + "' AND item_id = '" + data.item_id + "'";
 			common.connection.query(query, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
@@ -231,7 +253,7 @@ module.exports = {
 
 		function updateUser(json) {
 			var deferred = Q.defer();
-			user.update(json, null, null, deferred.makeNodeResolver());
+			user.update(json, null, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
 

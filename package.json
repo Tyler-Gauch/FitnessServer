@@ -3,21 +3,22 @@
   "version": "0.0.1",
   "description": "Server for VendFit App and Machine Communication",
   "contributors": [
-        {
-          "name": "Tyler Gauch",
-          "email": "gaucht@wit.edu"
-        },
-        {
-          "name": "Chris Allen",
-          "email": "allenc4@wit.edu"
-        }
+    {
+      "name": "Tyler Gauch",
+      "email": "gaucht@wit.edu"
+    },
+    {
+      "name": "Chris Allen",
+      "email": "allenc4@wit.edu"
+    }
   ],
   "scripts": {
     "start": "node src/server.js",
     "start-on-server": "node src/server.js > /var/log/vendfit/normal.log 2> /var/log/vendfit/error.log &"
   },
   "dependencies": {
-    "net": "*",
-    "mysql": "*"
+    "fifo": "^2.3.0",
+    "mysql": "*",
+    "net": "*"
   }
 }

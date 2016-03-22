@@ -2,10 +2,14 @@ var net = require('net');
 var common = require("./common")();
 var user = require("./userFunctions");
 var item = require("./itemFunctions");
+var machine = require("./machineFunctions");
+var queue = require("fifo");
 
 var server = net.createServer(function(socket){
 	console.log("Client connected");
 	socket.setEncoding('utf8');
+
+	socket.isHttp = false;
 
 	var allData = "";
 
@@ -19,20 +23,55 @@ var server = net.createServer(function(socket){
 	});
 
 	socket.on("end", function(){
-		console.log("Client left :(");
+		if(!socket.isHttp && socket.identifer != null)
+		{
+			console.log(socket.identifer + " disconnected.");
+			delete machine.sockets[socket.identifer];
+		}
 	});
 });
 
+var handleMachineSocket = function(socket, time){
+	var currentTime = Math.floor(Date.now() / 1000);//current time in seconds
+	if(common.checkValue(time) == null){
+		time = currentTime;
+	}
+
+	if(!socket.queue.isEmpty())
+	{
+		var cmd = socket.queue.shift();
+		if(cmd.indexOf("v") > -1 && socket.waitingForVendResponse){
+			console.log("Sending Vend Command: " + cmd + " to " + socket.identifier);
+			socket.queue.push(cmd);
+			socket.write(cmd+"\n");	
+		}else if(cmd.indexOf("v") == -1){
+			console.log("Sending: " + cmd + " to " + socket.identifier);
+			socket.write(cmd+"\n");
+		}
+	}else if(currentTime - time > 10)//checkin time
+	{
+		socket.queue.push("c");
+		time = currentTime;
+	}
+
+
+	setTimeout(function(){
+		handleMachineSocket(socket, time);
+	}, 1000)
+}
+
 server.listen(8888, "0.0.0.0");
+
+console.log("Server is running on 8888");
 
 var processInput = function(data, socket){
 	data = data.substring(0, data.length - (data.length - data.indexOf(common.END)) + 1);
-	var isHttp = false;
+	socket.isHttp = false;
 	
 	//Check if we have a post request.
 	if(data.substring(0,4).indexOf("POST") > -1)
 	{
-		isHttp = true;
+		socket.isHttp = true;
 
 		//check if we have windows line common.ENDings or unix
 		//and extract the post body
@@ -70,23 +109,23 @@ var processInput = function(data, socket){
 			// 	message: "'data' is required."
 			// }, common.HttpCode.OK);
 		}
-		else if (json.operation.indexOf("user_") > -1 && isHttp)
+		else if (json.operation.indexOf("user_") > -1 && socket.isHttp)
 		{
 			if(json.operation == "user_basic")
 			{
-				user.viewbasic(json.data, isHttp, socket);
+				user.viewbasic(json.data, socket);
 			}
 			else if(json.operation == "user_all")
 			{
-				user.viewall(json.data, isHttp, socket);
+				user.viewall(json.data, socket);
 			}
 			else if(json.operation == "user_create" || json.operation == "user_add")
 			{
-				user.create(json.data, isHttp, socket);
+				user.create(json.data, socket);
 			}
 			else if(json.operation == "user_update")
 			{
-				user.update(json.data, isHttp, socket);
+				user.update(json.data, socket);
 			}
 			else
 			{
@@ -95,20 +134,48 @@ var processInput = function(data, socket){
 			}
 
 		}
-		else if (json.operation.indexOf("item_") > -1 && isHttp)
+		else if (json.operation.indexOf("item_") > -1 && socket.isHttp)
 		{
 			if (json.operation == "item_all")
 			{
-				item.viewall(json.data, isHttp, socket);
+				item.viewall(json.data, socket);
 			}
 			else if (json.operation == "item_purchase")
 			{
-				item.purchase(json.data, isHttp, socket);
+				item.purchase(json.data, socket);
 			}
 			else
 			{
 				response.success = false;
 				response.message = "Function not available";
+			}
+		}
+		else if(json.operation.indexOf("machine_") > -1 && !socket.isHttp)
+		{
+			if(json.operation == "machine_registration")
+			{
+				if(json.data.identifier != null)
+				{
+					socket.identifier = json.data.identifier;
+					socket.queue = queue();
+					var otherSocket = machine.sockets[socket.identifier];
+					if(otherSocket != null)
+					{
+						otherSocket.end();
+					}
+					machine.sockets[socket.identifier] = socket;
+					handleMachineSocket(socket);
+				}
+				machine.registration(json.data);
+			}else if(json.operation == "machine_checkin")
+			{
+				if(common.checkValue(machine.sockets[socket.identifier]) == null){
+					socket.write('r\n');//force the machine to register first
+				}else{
+					machine.checkin(json.data);
+				}
+			}else if(json.operation == "machine_vend_response"){
+				socket.onVendResponse(json.data);
 			}
 		}
 		else
@@ -119,7 +186,7 @@ var processInput = function(data, socket){
 
 		if (!response.success) 
 		{
-			common.returnJsonResponse(isHttp, socket, response, common.HttpCode.OK);
+			common.returnJsonResponse(socket, response, common.HttpCode.OK);
 		}
 		// else if(json.operation.indexOf("user_") > -1 && !isHttp)
 		// {
@@ -152,10 +219,11 @@ var processInput = function(data, socket){
 		//invlaid json
 		console.error("Invalid JSON");
 		console.error(data);
+		console.error("ERROR:");
 		console.error(e);
 		var json = {success: false, message: "Invalid Json"};
 		//scommon.END Response
-		common.returnJsonResponse(isHttp, socket, json, common.HttpCode.OK);
+		common.returnJsonResponse(socket, json, common.HttpCode.OK);
 	}
 }
 

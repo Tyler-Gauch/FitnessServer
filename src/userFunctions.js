@@ -2,8 +2,9 @@ var common = require("./common.js")();
 var Q      = require("q");
 
 module.exports = {
-	viewbasic: function(data, isHttp, socket, callback)
+	viewbasic: function(data, socket, callback)
 	{
+		console.log("3");
 		if(common.checkValue(data.id) == null)
 		{
 
@@ -14,7 +15,7 @@ module.exports = {
 				return;
 			}
 
-			common.returnJsonResponse(isHttp, socket, {
+			common.returnJsonResponse(socket, {
 				success: false,
 				message: err
 			}, common.HttpCode.OK);
@@ -38,13 +39,13 @@ module.exports = {
 					console.error("Mysql Error");
 					console.error(err);
 
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: false,
 						message: "An Unkown error occured"
 					}, common.HttpCode.OK);
 				}else
 				{
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: true,
 						data: result[0]
 					}, common.HttpCode.OK);
@@ -53,8 +54,9 @@ module.exports = {
 		}
 	},
 
-	viewall: function(data, isHttp, socket, callback)
+	viewall: function(data, socket, callback)
 	{
+		console.log(callback);
 		if(common.checkValue(data.id) == null)
 		{
 			var err = "'data.id' is required";
@@ -64,7 +66,7 @@ module.exports = {
 				return;
 			}
 
-			common.returnJsonResponse(isHttp, socket, {
+			common.returnJsonResponse(socket, {
 				success: false, 
 				message: err
 			}, common.HttpCode.OK);
@@ -74,20 +76,23 @@ module.exports = {
 				query += " WHERE fitbit_id='" + data.id + "'";
 
 			if (typeof(data.id) == 'number') {
-				query += "OR id='" + id +"'";
+				query += "OR id='" + data.id +"'";
 			} 
 
 			if (callback) {
+				console.log("callback query");
 				common.connection.query(query, callback);
 				return;
 			}
+
+			console.log("non callback query");
 
 			common.connection.query(query, function(err, result){
 				if(err)
 				{
 					console.error("Mysql Error");
 					console.error(err);
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: false,
 						message: "An Unkown error occured"
 					}, common.HttpCode.OK);
@@ -96,13 +101,13 @@ module.exports = {
 					console.log(result);
 					if(common.checkValue(result[0]) == null)
 					{
-						common.returnJsonResponse(isHttp, socket, {
+						common.returnJsonResponse(socket, {
 							success: false,
 							message: "User with id '"+data.id+"' does not exist."
 						}, common.HttpCode.OK);	
 					}else
 					{
-						common.returnJsonResponse(isHttp, socket, {
+						common.returnJsonResponse(socket, {
 							success: true,
 							data: result[0]
 						}, common.HttpCode.OK);
@@ -112,17 +117,17 @@ module.exports = {
 		}
 	},
 
-	create: function(data, isHttp, socket)
+	create: function(data, socket)
 	{
 		if(common.checkValue(data.fitbit_id) == null)
 		{
-			common.returnJsonResponse(isHttp, socket, {
+			common.returnJsonResponse(socket, {
 				success: false, 
 				message: "'data.fitbit_id' is required"
 			}, common.HttpCode.OK);
 		}else if(common.checkValue(data.access_token) == null)
 		{
-			common.returnJsonResponse(isHttp, socket, {
+			common.returnJsonResponse(socket, {
 				success: false, 
 				message: "'data.access_token' is required"
 			}, common.HttpCode.OK);
@@ -141,12 +146,12 @@ module.exports = {
 					console.error(err);
 					if(err.errno == 1062)
 					{
-						common.returnJsonResponse(isHttp, socket, {
+						common.returnJsonResponse(socket, {
 							success: false,
 							message: "User with fitbit_id '"+data.fitbit_id+"' already exists."
 						}, common.HttpCode.OK);
 					}else{
-						common.returnJsonResponse(isHttp, socket, {
+						common.returnJsonResponse(socket, {
 							success: false,
 							message: "An unkown error occured"
 						}, common.HttpCode.OK);
@@ -155,7 +160,7 @@ module.exports = {
 				}else
 				{
 					console.log(result);
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: true,
 						data: {
 							created_id: result.insertId
@@ -166,7 +171,7 @@ module.exports = {
 		}
 	},
 
-	update: function(data, isHttp, socket, callback)
+	update: function(data, socket, callback)
 	{
 		if(common.checkValue(data.id) == null)
 		{
@@ -177,7 +182,7 @@ module.exports = {
 				return;
 			}
 
-			common.returnJsonResponse(isHttp, socket, {
+			common.returnJsonResponse(socket, {
 				success: false, 
 				message: err
 			}, common.HttpCode.OK);
@@ -192,7 +197,7 @@ module.exports = {
 				{
 					console.error("Mysql Error");
 					console.error(err);
-					common.returnJsonResponse(isHttp, socket, {
+					common.returnJsonResponse(socket, {
 						success: false,
 						message: "An unkown error occured"
 					}, common.HttpCode.OK);
@@ -251,6 +256,10 @@ module.exports = {
 						}
 					});
 
+					console.log(result);
+					common.returnJsonResponse(socket, {
+						success: true,
+					}, common.HttpCode.OK);
 				}
 			});
 
