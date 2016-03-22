@@ -42,13 +42,13 @@ var handleMachineSocket = function(socket, time){
 		var cmd = socket.queue.shift();
 		console.log("Sending: " + cmd + " to " + socket.identifier);
 		socket.write(cmd+"\n");
-		socket.queue.push(cmd);
-		socket.queue.push(cmd);
-		socket.queue.push(cmd);
-		socket.queue.push(cmd);
-		socket.queue.push(cmd);
 	}else if(currentTime - time > 10)//checkin time
 	{
+		socket.queue.push("c");
+		socket.queue.push("c");
+		socket.queue.push("c");
+		socket.queue.push("c");
+		socket.queue.push("c");
 		socket.queue.push("c");
 		time = currentTime;
 	}
