@@ -158,7 +158,7 @@ var processInput = function(data, socket){
 				machine.registration(json.data);
 			}else if(json.operation == "machine_checkin")
 			{
-				if(common.checkValue(machine.sockets[socket.identifer]) == null){
+				if(common.checkValue(machine.sockets[socket.identifier]) == null){
 					socket.write('r\n');//force the machine to register first
 				}else{
 					machine.checkin(json.data);
