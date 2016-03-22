@@ -42,13 +42,10 @@
 
 // });
 
-
-
-
-
 var common = require("./common.js")();
 var user   = require("./userFunctions");
 var Q      = require("q");
+
 module.exports = {
 	viewall: function(data, isHttp, socket)
 	{

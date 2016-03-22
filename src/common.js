@@ -11,6 +11,7 @@ module.exports = function(){
 			host: "127.0.0.1",
 			user: "root",
 			password: "P@ssword1",
+			dateStrings: "date",
 			database: "vendfit"
 		}),
 
@@ -43,6 +44,24 @@ module.exports = function(){
 			}
 
 			return value;
+		},
+
+		getDate: function() { // Get the current date in yyyy-mm-dd format
+
+		    var today = new Date();
+		    var dd = today.getDate();
+		    var mm = today.getMonth() + 1; // January is 0
+
+		    var yyyy = today.getFullYear();
+
+		    if (dd < 10) {
+		        dd = '0' + dd;
+		    }
+		    if (mm < 10) {
+		        mm = '0' + mm;
+		    }
+
+		    return yyyy + '-' + mm + '-' + dd;
 		}
 	}
 }
