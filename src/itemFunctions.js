@@ -187,7 +187,7 @@ module.exports = {
 
 			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
 
-			machine.socket[vendingItemInfo.identifier].onVendResponse = function(response){
+			machine.sockets[vendingItemInfo.identifier].onVendResponse = function(response){
 
 				if(!response.success)
 				{

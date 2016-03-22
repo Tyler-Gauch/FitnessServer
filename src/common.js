@@ -17,6 +17,9 @@ module.exports = function(){
 		returnJsonResponse: function(socket, json, status){
 			var jsonString = JSON.stringify(json);
 
+			console.log("Sending: ");
+			console.log(jsonString);
+
 			if(socket.isHttp)
 			{
 				socket.write("HTTP/1.1 " + status+ "\n");
