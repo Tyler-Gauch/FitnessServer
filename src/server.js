@@ -40,15 +40,16 @@ var handleMachineSocket = function(socket, time){
 	if(!socket.queue.isEmpty())
 	{
 		var cmd = socket.queue.shift();
-		console.log("Sending: " + cmd + " to " + socket.identifier);
-		socket.write(cmd+"\n");
+		if(cmd.indexOf("v") > -1 && socket.waitingForVendResponse){
+			console.log("Sending Vend Command: " + cmd + " to " + socket.identifier);
+			socket.queue.push(cmd);
+			socket.write(cmd+"\n");	
+		}else if(cmd.indexOf("v") == -1){
+			console.log("Sending: " + cmd + " to " + socket.identifier);
+			socket.write(cmd+"\n");
+		}
 	}else if(currentTime - time > 10)//checkin time
 	{
-		socket.queue.push("c");
-		socket.queue.push("c");
-		socket.queue.push("c");
-		socket.queue.push("c");
-		socket.queue.push("c");
 		socket.queue.push("c");
 		time = currentTime;
 	}

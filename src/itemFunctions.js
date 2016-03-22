@@ -186,13 +186,11 @@ module.exports = {
 			// TODO - Vend here and perform below AFTER receive success message from vend
 
 			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
-			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
-			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
-			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
-			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
-			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
+			machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = true;
 
 			machine.sockets[vendingItemInfo.identifier].onVendResponse = function(response){
+
+				machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = false;
 
 				if(!response.success)
 				{
