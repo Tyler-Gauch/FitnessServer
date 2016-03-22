@@ -194,6 +194,7 @@ module.exports = {
 					common.returnJsonResponse(socket, {
 						success: false
 					}, common.HttpCode.OK);
+					return;
 				}
 				// Update stock count and update user steps taken today
 				Q.allSettled([
