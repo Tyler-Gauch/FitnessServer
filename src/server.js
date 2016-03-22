@@ -57,7 +57,7 @@ var handleMachineSocket = function(socket, time){
 
 	setTimeout(function(){
 		handleMachineSocket(socket, time);
-	}, 5000)
+	}, 1000)
 }
 
 server.listen(8888, "0.0.0.0");
