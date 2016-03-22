@@ -165,6 +165,8 @@ var processInput = function(data, socket){
 				}else{
 					machine.checkin(json.data);
 				}
+			}else if(json.operation == "machine_vend_response"){
+				socket.onVendResponse(json.data);
 			}
 		}
 		else
