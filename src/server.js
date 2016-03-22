@@ -41,10 +41,10 @@ var handleMachineSocket = function(socket, time){
 	{
 		var cmd = socket.queue.shift();
 		console.log(cmd);
-		socket.write(cmd);
+		socket.write(cmd+"\n");
 	}else if(currentTime - time > 5)//checkin time
 	{
-		socket.queue.push("c");
+		socket.write("c\n");
 		time = currentTime;
 	}
 
@@ -159,7 +159,7 @@ var processInput = function(data, socket){
 			}else if(json.operation == "machine_checkin")
 			{
 				if(common.checkValue(machine.sockets[socket.identifer]) == null){
-					socket.write('r');//force the machine to register first
+					socket.write('r\n');//force the machine to register first
 				}else{
 					machine.checkin(json.data);
 				}

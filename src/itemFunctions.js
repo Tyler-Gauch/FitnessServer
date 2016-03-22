@@ -212,7 +212,7 @@ module.exports = {
 				common.returnJsonResponse(socket, {
 					success: true
 				}, common.HttpCode.OK);
-				
+
 			}).done();
 
 		}).done();
