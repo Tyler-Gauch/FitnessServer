@@ -44,6 +44,9 @@ var handleMachineSocket = function(socket, time){
 		socket.write(cmd+"\n");
 		socket.write(cmd+"\n");
 		socket.write(cmd+"\n");
+		socket.write(cmd+"\n");
+		socket.write(cmd+"\n");
+		socket.write(cmd+"\n");
 	}else if(currentTime - time > 10)//checkin time
 	{
 		socket.queue.push("c");
