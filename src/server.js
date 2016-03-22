@@ -40,11 +40,11 @@ var handleMachineSocket = function(socket, time){
 	if(!socket.queue.isEmpty())
 	{
 		var cmd = socket.queue.shift();
-		console.log(cmd);
+		console.log("Sending: " + cmd + " to " + socket.identifier);
 		socket.write(cmd+"\n");
 	}else if(currentTime - time > 5)//checkin time
 	{
-		socket.write("c\n");
+		socket.queue.push("c");
 		time = currentTime;
 	}
 
