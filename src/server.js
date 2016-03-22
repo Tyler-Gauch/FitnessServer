@@ -158,6 +158,11 @@ var processInput = function(data, socket){
 				{
 					socket.identifier = json.data.identifier;
 					socket.queue = queue();
+					var otherSocket = machine.sockets[socket.identifier];
+					if(otherSocket != null)
+					{
+						otherSocket.end();
+					}
 					machine.sockets[socket.identifier] = socket;
 					handleMachineSocket(socket);
 				}
