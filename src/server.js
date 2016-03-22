@@ -3,12 +3,13 @@ var common = require("./common")();
 var user = require("./userFunctions");
 var item = require("./itemFunctions");
 var machine = require("./machineFunctions");
-
-var machineSockets = {};
+var queue = require("fifo");
 
 var server = net.createServer(function(socket){
 	console.log("Client connected");
 	socket.setEncoding('utf8');
+
+	socket.isHttp = false;
 
 	var allData = "";
 
@@ -25,10 +26,33 @@ var server = net.createServer(function(socket){
 		if(!socket.isHttp && socket.identifer != null)
 		{
 			console.log(socket.identifer + " disconnected.");
-			delete machineSockets[socket.identifer];
+			delete machine.sockets[socket.identifer];
 		}
 	});
 });
+
+var handleMachineSocket = function(socket, time){
+	var currentTime = Math.floor(Date.now() / 1000);//current time in seconds
+	if(common.checkValue(time) == null){
+		time = currentTime;
+	}
+
+	if(!socket.queue.isEmpty())
+	{
+		var cmd = socket.queue.shift();
+		console.log(cmd);
+		socket.write(cmd);
+	}else if(currentTime - time > 5)//checkin time
+	{
+		socket.queue.push("c");
+		time = currentTime;
+	}
+
+
+	setTimeout(function(){
+		handleMachineSocket(socket, time);
+	}, 0)
+}
 
 server.listen(8888, "0.0.0.0");
 
@@ -124,17 +148,21 @@ var processInput = function(data, socket){
 		{
 			if(json.operation == "machine_registration")
 			{
-				if(json.data.identifer != null)
+				if(json.data.identifier != null)
 				{
-					socket.identifier = json.data.identifer;
-					machineSockets[socket.identifer] = socket;
+					socket.identifier = json.data.identifier;
+					socket.queue = queue();
+					machine.sockets[socket.identifier] = socket;
+					handleMachineSocket(socket);
 				}
 				machine.registration(json.data);
 			}else if(json.operation == "machine_checkin")
 			{
-				machine.checkin(json.data);
-			}else{
-				return;//we don't want to send a response to the vending machine
+				if(common.checkValue(machine.sockets[socket.identifer]) == null){
+					socket.write('r');//force the machine to register first
+				}else{
+					machine.checkin(json.data);
+				}
 			}
 		}
 		else
@@ -178,6 +206,7 @@ var processInput = function(data, socket){
 		//invlaid json
 		console.error("Invalid JSON");
 		console.error(data);
+		console.error("ERROR:");
 		console.error(e);
 		var json = {success: false, message: "Invalid Json"};
 		//scommon.END Response

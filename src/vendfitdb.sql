@@ -15,6 +15,7 @@ CREATE TABLE vendfit.user(
 
 CREATE TABLE vendfit.item(
 	id INT NOT NULL AUTO_INCREMENT,
+	vend_id INT NOT NULL,
 	name VARCHAR(128) NOT NULL,
 	cost INT NOT NULL,
 	calories INT,

@@ -3,6 +3,7 @@ var common = require("./common.js")();
 module.exports = {
 	viewbasic: function(data, socket, callback)
 	{
+		console.log("3");
 		if(common.checkValue(data.id) == null)
 		{
 
@@ -54,6 +55,7 @@ module.exports = {
 
 	viewall: function(data, socket, callback)
 	{
+		console.log(callback);
 		if(common.checkValue(data.id) == null)
 		{
 			var err = "'data.id' is required";
@@ -73,13 +75,16 @@ module.exports = {
 				query += " WHERE fitbit_id='" + data.id + "'";
 
 			if (typeof(data.id) == 'number') {
-				query += "OR id='" + id +"'";
+				query += "OR id='" + data.id +"'";
 			} 
 
 			if (callback) {
+				console.log("callback query");
 				common.connection.query(query, callback);
 				return;
 			}
+
+			console.log("non callback query");
 
 			common.connection.query(query, function(err, result){
 				if(err)

@@ -48,6 +48,7 @@
 
 var common = require("./common.js")();
 var user   = require("./userFunctions");
+var machine = require("./machineFunctions");
 var Q      = require("q");
 module.exports = {
 	viewall: function(data, socket)
@@ -98,6 +99,7 @@ module.exports = {
 
 	purchase: function(data, socket) 
 	{
+		console.log(data);
 		var user_id = null;
 
 		if (common.checkValue(data.user_id) != null) {
@@ -117,6 +119,8 @@ module.exports = {
 			return;
 		} 
 
+		console.log("1");
+
 		// Check to ensure user has enough balance to make purchase
 		// Get the cost of desired item
 		// Check to make sure item is in stock in desired vending machine
@@ -128,6 +132,7 @@ module.exports = {
 			getItemCost(data.item_id),
 			getVendingItemInfo(data.vending_machine_id, data.item_id)
 		]).then(function (results) {
+			console.log("2");
 			results.forEach(function (result) {
 				if (result.state === "fulfilled") {
 					console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
@@ -141,6 +146,7 @@ module.exports = {
 					return;
 				}
 			});
+
 
 			// results[0] contains {id, access_token, fitbit_id, total_steps, steps_spent_today, current_balance} at results[0][0][0]
 			// results[1] contains {cost} at results[1][0][0]
@@ -164,6 +170,7 @@ module.exports = {
 
 			// Check to make sure item is in stock in desired vending machine
 			if (vendingItemInfo.stock < 1) {
+				console.log("out of stock");
 				common.returnJsonResponse(socket, {
 					success: false,
 					message: "Item id '" + data.item_id + "' is out of stock in vending machine '" + data.vending_machine_id + "'"
@@ -177,6 +184,9 @@ module.exports = {
 				// Update user steps taken today
 
 			// TODO - Vend here and perform below AFTER receive success message from vend
+
+			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
+
 
 			// Update stock count and update user steps taken today
 			Q.allSettled([
@@ -196,19 +206,20 @@ module.exports = {
 						}, common.HttpCode.OK);
 						return;
 					}
-
-					// If we made it here, everything was successful 
-					common.returnJsonResponse(socket, {
-						success: true
-					}, common.HttpCode.OK);
 				});
-			});
 
-		});
+				// If we made it here, everything was successful 
+				common.returnJsonResponse(socket, {
+					success: true
+				}, common.HttpCode.OK);
+				
+			}).done();
+
+		}).done();
 
 		function getUserInfo(user_id) {
 			var deferred = Q.defer();
-			user.viewall({id: user_id}, null, null, deferred.makeNodeResolver());
+			user.viewall({id: user_id}, null, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
 
@@ -220,7 +231,7 @@ module.exports = {
 
 		function getVendingItemInfo(vending_machine_id, item_id) {
 			var deferred = Q.defer();
-			var query = "SELECT id, item_id, vending_machine_id, stock FROM item_vending_machine WHERE vending_machine_id = '" + data.vending_machine_id + "' AND item_id = '" + data.item_id + "'";
+			var query = "SELECT iv.id, iv.item_id, iv.vending_machine_id, iv.stock, v.identifier, i.vend_id FROM item_vending_machine iv INNER JOIN vending_machine v ON iv.vending_machine_id = v.id INNER JOIN item i ON i.id = iv.item_id WHERE vending_machine_id = '" + data.vending_machine_id + "' AND item_id = '" + data.item_id + "'";
 			common.connection.query(query, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
@@ -234,7 +245,7 @@ module.exports = {
 
 		function updateUser(json) {
 			var deferred = Q.defer();
-			user.update(json, null, null, deferred.makeNodeResolver());
+			user.update(json, null, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
 
