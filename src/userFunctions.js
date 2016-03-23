@@ -189,10 +189,15 @@ module.exports = {
 		}else{
 
 			var id = data.id;
-			delete data.id;
 
 			// Get the last date the step count was updated
-			common.connection.query("SELECT date_updated FROM user WHERE fitbit_id='" + id + "'", function(err, result) {
+			// Now update the user
+			if (typeof(id) == 'number') {
+				var query = "SELECT date_updated FROM user WHERE id="+id+" OR fitbit_id='" + id + "'";
+			} else {
+				var query = "SELECT date_updated FROM user WHERE fitbit_id='" + id + "'";
+			}
+			common.connection.query(query, (function(err, result) {
 				if(err)
 				{
 					console.error("Mysql Error");
@@ -205,13 +210,14 @@ module.exports = {
 				{
 					// if the last date the step count was updated is not today, set step balance to zero
 					//console.log("result: " + result);
+					console.log(result);
 					var lastUpdated = common.checkValue(result[0].date_updated);
 					if (lastUpdated == null) {
 						lastUpdated = common.getDate();
 					}
 					lastUpdated = new Number(Date.parse(lastUpdated));
 
-					var newDate = new Number(Date.parse(data.date_updated));
+					var newDate = new Number(Date.parse(data.date_updated)); 
 
 					console.log("Date received: " + newDate + ", last updated date on server: " + lastUpdated);
 					
@@ -228,40 +234,38 @@ module.exports = {
 
 					// Now update the user
 					if (typeof(id) == 'number') {
-						var query = "UPDATE vendfit.user SET ? WHERE id='"+id+"' OR fitbit_id='"+id+"'";
+						var query = "UPDATE vendfit.user SET ? WHERE id="+id+" OR fitbit_id='"+id+"'";
 					} else {
 						var query = "UPDATE vendfit.user SET ? WHERE fitbit_id='"+id+"'";
 					}
+
+					if(common.checkValue(data.date_updated) == null)
+					{
+						data.date_updated = new Date();
+					}					
 
 					if (callback) {
 						common.connection.query(query, data, callback);
 						return;
 					}
 
-					common.connection.query(query, data, function(err, result){
+					common.connection.query(query, data, (function(err, result){
 						if(err)
 						{
 							console.error("Mysql Error");
 							console.error(err);
-							common.returnJsonResponse(isHttp, socket, {
+							common.returnJsonResponse(socket, {
 								success: false,
 								message: "An unkown error occured"
 							}, common.HttpCode.OK);
 						}else
 						{
 							console.log(result);
-							common.returnJsonResponse(isHttp, socket, {
-								success: true,
-							}, common.HttpCode.OK);
+							this.viewall(data, socket, null);
 						}
-					});
-
-					console.log(result);
-					common.returnJsonResponse(socket, {
-						success: true,
-					}, common.HttpCode.OK);
+					}).bind(this));
 				}
-			});
+			}).bind(this));
 
 		}
 	}
