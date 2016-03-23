@@ -1,4 +1,5 @@
 var common = require("./common.js")();
+var Q      = require("q");
 
 module.exports = {
 	viewbasic: function(data, socket, callback)
@@ -70,7 +71,7 @@ module.exports = {
 				message: err
 			}, common.HttpCode.OK);
 		}else{
-			var query = "SELECT id, access_token, fitbit_id, total_steps, steps_spent_today, total_steps - steps_spent_today as current_balance";
+			var query = "SELECT id, access_token, fitbit_id, total_steps, steps_spent_today, total_steps - steps_spent_today as current_balance, date_updated";
 				query += " FROM vendfit.user";
 				query += " WHERE fitbit_id='" + data.id + "'";
 
@@ -130,7 +131,11 @@ module.exports = {
 				success: false, 
 				message: "'data.access_token' is required"
 			}, common.HttpCode.OK);
-		}else{
+		} else {
+
+			if (common.checkValue(data.date_updated) == null) {
+				data.date_updated = common.getDate();
+			}
 			data.total_steps = common.checkValue(data.total_steps, 0);
 			data.steps_spent_today = common.checkValue(data.steps_spent_today, 0);
 			var query = "INSERT INTO vendfit.user SET ?";
@@ -182,20 +187,17 @@ module.exports = {
 				message: err
 			}, common.HttpCode.OK);
 		}else{
+
 			var id = data.id;
-			delete data.id;
+
+			// Get the last date the step count was updated
+			// Now update the user
 			if (typeof(id) == 'number') {
-				var query = "UPDATE vendfit.user SET ? WHERE id='"+id+"' OR fitbit_id='"+id+"'";
+				var query = "SELECT date_updated FROM user WHERE id="+id+" OR fitbit_id='" + id + "'";
 			} else {
-				var query = "UPDATE vendfit.user SET ? WHERE fitbit_id='"+id+"'";
+				var query = "SELECT date_updated FROM user WHERE fitbit_id='" + id + "'";
 			}
-
-			if (callback) {
-				common.connection.query(query, data, callback);
-				return;
-			}
-
-			common.connection.query(query, data, function(err, result){
+			common.connection.query(query, (function(err, result) {
 				if(err)
 				{
 					console.error("Mysql Error");
@@ -206,12 +208,65 @@ module.exports = {
 					}, common.HttpCode.OK);
 				}else
 				{
+					// if the last date the step count was updated is not today, set step balance to zero
+					//console.log("result: " + result);
 					console.log(result);
-					common.returnJsonResponse(socket, {
-						success: true,
-					}, common.HttpCode.OK);
+					var lastUpdated = common.checkValue(result[0].date_updated);
+					if (lastUpdated == null) {
+						lastUpdated = common.getDate();
+					}
+					lastUpdated = new Number(Date.parse(lastUpdated));
+
+					var newDate = new Number(Date.parse(data.date_updated)); 
+
+					console.log("Date received: " + newDate + ", last updated date on server: " + lastUpdated);
+					
+					var resetBalance = false;
+
+					if (lastUpdated > newDate || lastUpdated < newDate) {
+						console.log("Reseting balance");
+						var resetBalance = true;
+					}
+
+					if (resetBalance) {
+						data.steps_spent_today = 0;
+					}
+
+					// Now update the user
+					if (typeof(id) == 'number') {
+						var query = "UPDATE vendfit.user SET ? WHERE id="+id+" OR fitbit_id='"+id+"'";
+					} else {
+						var query = "UPDATE vendfit.user SET ? WHERE fitbit_id='"+id+"'";
+					}
+
+					if(common.checkValue(data.date_updated) == null)
+					{
+						data.date_updated = new Date();
+					}					
+
+					if (callback) {
+						common.connection.query(query, data, callback);
+						return;
+					}
+
+					common.connection.query(query, data, (function(err, result){
+						if(err)
+						{
+							console.error("Mysql Error");
+							console.error(err);
+							common.returnJsonResponse(socket, {
+								success: false,
+								message: "An unkown error occured"
+							}, common.HttpCode.OK);
+						}else
+						{
+							console.log(result);
+							this.viewall(data, socket, null);
+						}
+					}).bind(this));
 				}
-			});
+			}).bind(this));
+
 		}
 	}
 
