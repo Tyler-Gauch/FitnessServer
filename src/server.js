@@ -60,9 +60,9 @@ var handleMachineSocket = function(socket, time){
 	}, 1000)
 }
 
-server.listen(1234, "0.0.0.0");
+server.listen(8888, "0.0.0.0");
 
-console.log("Server is running on 1234");
+console.log("Server is running on 8888");
 
 var processInput = function(data, socket){
 	data = data.substring(0, data.length - (data.length - data.indexOf(common.END)) + 1);
