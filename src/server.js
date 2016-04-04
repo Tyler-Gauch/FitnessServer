@@ -60,9 +60,9 @@ var handleMachineSocket = function(socket, time){
 	}, 1000)
 }
 
-server.listen(8888, "0.0.0.0");
+server.listen(1234, "0.0.0.0");
 
-console.log("Server is running on 8888");
+console.log("Server is running on 1234");
 
 var processInput = function(data, socket){
 	data = data.substring(0, data.length - (data.length - data.indexOf(common.END)) + 1);
@@ -188,32 +188,7 @@ var processInput = function(data, socket){
 		{
 			common.returnJsonResponse(socket, response, common.HttpCode.OK);
 		}
-		// else if(json.operation.indexOf("user_") > -1 && !isHttp)
-		// {
-		// 	common.returnJsonResponse(isHttp, socket, {
-		// 		success: false, 
-		// 		message: "Function not available."
-		// 	}, common.HttpCode.OK);
-		// }
-		// else if(json.operation == "user_basic")
-		// {
-		// 	user.viewbasic(json.data, isHttp, socket);
-		// }else if(json.operation == "user_all")
-		// {
-		// 	user.viewall(json.data, isHttp, socket);
-		// }else if(json.operation == "user_create")
-		// {
-		// 	user.create(json.data, isHttp, socket);
-		// }else if(json.operation == "user_update")
-		// {
-		// 	user.update(json.data, isHttp, socket);
-		// }
-		// else
-		// {
-		// 	response.success = false;
-		// 	response.message = "Invalid operation '"+json.operation+"'";
-		// 	common.returnJsonResponse(isHttp, socket, response, common.HttpCode.OK);
-		// }
+
 	}catch(e)
 	{
 		//invlaid json

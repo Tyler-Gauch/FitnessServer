@@ -1,47 +1,3 @@
-// Q.all([
-// 	this.queryForCost(data.item_id),
-// 	//queryForPoints()
-// 	]).then(function(results) {
-// 		// costResult will be the first row returned from the cost
-// 		var costResult = common.checkValue(results[0][0][0])  // last [0] for 1st row only. Gives array even if only 1 row returned
-
-
-// 		// results[function - by order of array under all][all rows][ith returned row]
-// 		var cost = null;
-
-// 		if (costResult != null) {
-// 			cost = costResult.cost;
-// 		}
-		
-// 	});
-
-
-// 	queryForCost: function(id) {
-// 		var defered = Q.defer();
-// 		common.connection.query(...., defered.makeNodeResolver());
-// 		return defered.promise;
-// 	}
-
-
-
-// function a() {
-// 	function b() {
-// 		function c() {
-
-// 		}
-// 	}
-// }
-
-// ==
-
-// Q.all([
-// 	a(),
-// 	b(),
-// 	c()
-// ]).then(function(results) {
-
-// });
-
 var common = require("./common.js")();
 var user   = require("./userFunctions");
 var machine = require("./machineFunctions");
@@ -59,7 +15,7 @@ module.exports = {
 			return;
 		}
 
-		var query = "SELECT i.id, i.name, i.cost, i.calories, i.sugars, i.carbs, i.saturated_fat, i.trans_fat, i.protein, i.sodium, i.servings, m.stock";
+		var query = "SELECT i.id, i.name, i.cost, i.calories, i.sugars, i.carbs, i.saturated_fat, i.trans_fat, i.protein, i.sodium, i.servings, i.pic, m.stock";
 			query += " FROM item AS i, item_vending_machine AS m";
 			query += " WHERE m.vending_machine_id ='" + data.id + "'" + " AND i.id = m.item_id";
 		common.connection.query(query, function(err, result){
@@ -175,55 +131,82 @@ module.exports = {
 				return;
 			}
 
-			// TODO //
-			// Vend
+
+			// Update stock count and update user steps taken today
+			Q.allSettled([
+				updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
+				updateUser({id: user_id,
+							steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
+			]).then(function (results) {
+				results.forEach(function (result) {
+					if (result.state === "fulfilled") {
+						console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
+					} else {
+						console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
+						// If anything is rejected, send the error response back to the client and return
+						common.returnJsonResponse(socket, {
+							success: false,
+							message: result.reason
+						}, common.HttpCode.OK);
+						return;
+					}
+				});
+
+				// If we made it here, everything was successful 
+				common.returnJsonResponse(socket, {
+					success: true
+				}, common.HttpCode.OK);
+
+			}).done();
+
+		}).done();
+
+			// Vend then on response,
 				// Update stock count
 				// Update user steps taken today
 
-			// TODO - Vend here and perform below AFTER receive success message from vend
+		// 	machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
+		// 	machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = true;
 
-			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
-			machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = true;
+		// 	machine.sockets[vendingItemInfo.identifier].onVendResponse = function(response){
 
-			machine.sockets[vendingItemInfo.identifier].onVendResponse = function(response){
+		// 		machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = false;
 
-				machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = false;
+		// 		if(!response.success)
+		// 		{
+		// 			common.returnJsonResponse(socket, {
+		// 				success: false
+		// 			}, common.HttpCode.OK);
+		// 			return;
+		// 		}
+		// 		// Update stock count and update user steps taken today
+		// 		Q.allSettled([
+		// 			updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
+		// 			updateUser({id: user_id,
+		// 						steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
+		// 		]).then(function (results) {
+		// 			results.forEach(function (result) {
+		// 				if (result.state === "fulfilled") {
+		// 					console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
+		// 				} else {
+		// 					console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
+		// 					// If anything is rejected, send the error response back to the client and return
+		// 					common.returnJsonResponse(socket, {
+		// 						success: false,
+		// 						message: result.reason
+		// 					}, common.HttpCode.OK);
+		// 					return;
+		// 				}
+		// 			});
 
-				if(!response.success)
-				{
-					common.returnJsonResponse(socket, {
-						success: false
-					}, common.HttpCode.OK);
-					return;
-				}
-				// Update stock count and update user steps taken today
-				Q.allSettled([
-					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
-					updateUser({id: user_id,
-								steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
-				]).then(function (results) {
-					results.forEach(function (result) {
-						if (result.state === "fulfilled") {
-							console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
-						} else {
-							console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
-							// If anything is rejected, send the error response back to the client and return
-							common.returnJsonResponse(socket, {
-								success: false,
-								message: result.reason
-							}, common.HttpCode.OK);
-							return;
-						}
-					});
+		// 			// If we made it here, everything was successful 
+		// 			common.returnJsonResponse(socket, {
+		// 				success: true
+		// 			}, common.HttpCode.OK);
 
-					// If we made it here, everything was successful 
-					common.returnJsonResponse(socket, {
-						success: true
-					}, common.HttpCode.OK);
-
-				}).done();
-			}
-		}).done();
+		// 		}).done();
+		// 	}
+		// }).done();
 
 		function getUserInfo(user_id) {
 			var deferred = Q.defer();
