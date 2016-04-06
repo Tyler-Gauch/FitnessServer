@@ -134,8 +134,6 @@ module.exports = {
 
 
 			
-		}).done();
-
 			// Vend then on response,
 				// Update stock count
 				// Update user steps taken today
