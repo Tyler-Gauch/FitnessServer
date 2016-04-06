@@ -133,91 +133,76 @@ module.exports = {
 			}
 
 
-			// Update stock count and update user steps taken today
-			Q.allSettled([
-				updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
-				updateUser({id: user_id,
-							steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
-			]).then(function (results) {
-				results.forEach(function (result) {
-					if (result.state === "fulfilled") {
-						console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
-					} else {
-						console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
-						// If anything is rejected, send the error response back to the client and return
-						common.returnJsonResponse(socket, {
-							success: false,
-							message: result.reason
-						}, common.HttpCode.OK);
-						return;
-					}
-				});
-
-
-				/////////////////////////////////////////////////////////////
-				// Add item to fitbit food log if desired
-				/////////////////////////////////////////////////////////////
-				if (common.checkValue(data.addToLog) == true) {
-					getFoodUnitID(userInfo, data.item_id).then( function(data) {
-						addToFitbitLog(userInfo, itemInfo, data.unitType, data.defaultAmount);
-					});
-				}
-
-				// If we made it here, everything was successful 
-				common.returnJsonResponse(socket, {
-					success: true
-				}, common.HttpCode.OK);
-
-			}).done();
-
+			
 		}).done();
 
 			// Vend then on response,
 				// Update stock count
 				// Update user steps taken today
 
-		// 	machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
-		// 	machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = true;
+			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
+			machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = true;
 
-		// 	machine.sockets[vendingItemInfo.identifier].onVendResponse = function(response){
+			machine.sockets[vendingItemInfo.identifier].onVendResponse = function(response){
 
-		// 		machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = false;
+			machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = false;
 
-		// 		if(!response.success)
-		// 		{
-		// 			common.returnJsonResponse(socket, {
-		// 				success: false
-		// 			}, common.HttpCode.OK);
-		// 			return;
-		// 		}
-		// 		// Update stock count and update user steps taken today
-		// 		Q.allSettled([
-		// 			updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
-		// 			updateUser({id: user_id,
-		// 						steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
-		// 		]).then(function (results) {
-		// 			results.forEach(function (result) {
-		// 				if (result.state === "fulfilled") {
-		// 					console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
-		// 				} else {
-		// 					console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
-		// 					// If anything is rejected, send the error response back to the client and return
-		// 					common.returnJsonResponse(socket, {
-		// 						success: false,
-		// 						message: result.reason
-		// 					}, common.HttpCode.OK);
-		// 					return;
-		// 				}
-		// 			});
+				if(!response.success)
+				{
+					common.returnJsonResponse(socket, {
+						success: false
+					}, common.HttpCode.OK);
+					return;
+				}
+				// Update stock count and update user steps taken today
+				// Update stock count and update user steps taken today
 
-		// 			// If we made it here, everything was successful 
-		// 			common.returnJsonResponse(socket, {
-		// 				success: true
-		// 			}, common.HttpCode.OK);
+				//need the stock in a 000 format
+				var paddedStock = vendingItemInfo.stock;
+				if(vendingItemInfo.stock < 100){
+					paddedStock = "0"+paddedStock;
+				}
+				if(vendingItemInfo.stock < 10){
+					paddedStock = "0"+paddedStock;
+				}
+				machine.sockets[vendingItemInfo.identifer].queue.push("d"+vendingItemInfo.vend_id+);
+				Q.allSettled([
+					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
+					updateUser({id: user_id,
+								steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
+				]).then(function (results) {
+					results.forEach(function (result) {
+						if (result.state === "fulfilled") {
+							console.log("\n\n----------------------------------------\nFulfilled:\n" + JSON.stringify(result.value) + "\n----------------------------------------");
+						} else {
+							console.log("\n\n----------------------------------------\nRejected reason: " + result.reason + "\n----------------------------------------");
+							// If anything is rejected, send the error response back to the client and return
+							common.returnJsonResponse(socket, {
+								success: false,
+								message: result.reason
+							}, common.HttpCode.OK);
+							return;
+						}
+					});
 
-		// 		}).done();
-		// 	}
-		// }).done();
+
+					/////////////////////////////////////////////////////////////
+					// Add item to fitbit food log if desired
+					/////////////////////////////////////////////////////////////
+					if (common.checkValue(data.addToLog) == true) {
+						getFoodUnitID(userInfo, data.item_id).then( function(data) {
+							addToFitbitLog(userInfo, itemInfo, data.unitType, data.defaultAmount);
+						});
+					}
+
+					// If we made it here, everything was successful 
+					common.returnJsonResponse(socket, {
+						success: true
+					}, common.HttpCode.OK);
+
+				}).done();
+			}
+		}).done();
 
 		function getUserInfo(user_id) {
 			var deferred = Q.defer();
