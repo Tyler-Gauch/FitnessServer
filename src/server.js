@@ -167,8 +167,8 @@ var processInput = function(data, socket){
 					}
 					machine.sockets[socket.identifier] = socket;
 					handleMachineSocket(socket);
+					machine.registration(json.data, socket);
 				}
-				machine.registration(json.data);
 			}else if(json.operation == "machine_checkin")
 			{
 				if(common.checkValue(machine.sockets[socket.identifier]) == null){

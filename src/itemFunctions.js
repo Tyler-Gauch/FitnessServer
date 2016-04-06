@@ -165,7 +165,7 @@ module.exports = {
 				if(vendingItemInfo.stock < 10){
 					paddedStock = "0"+paddedStock;
 				}
-				machine.sockets[vendingItemInfo.identifer].queue.push("d"+vendingItemInfo.vend_id+);
+				machine.sockets[vendingItemInfo.identifer].queue.push("d"+vendingItemInfo.vend_id+paddedStock);
 				Q.allSettled([
 					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
 					updateUser({id: user_id,
