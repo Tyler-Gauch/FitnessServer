@@ -1,7 +1,8 @@
-var common = require("./common.js")();
-var user   = require("./userFunctions");
+var common  = require("./common.js")();
+var user    = require("./userFunctions");
 var machine = require("./machineFunctions");
-var Q      = require("q");
+var Q       = require("q");
+var Client  = require('node-rest-client').Client;
 
 module.exports = {
 	viewall: function(data, socket)
@@ -152,6 +153,16 @@ module.exports = {
 					}
 				});
 
+
+				/////////////////////////////////////////////////////////////
+				// Add item to fitbit food log if desired
+				/////////////////////////////////////////////////////////////
+				if (common.checkValue(data.addToLog) == true) {
+					getFoodUnitID(userInfo, data.item_id).then( function(data) {
+						addToFitbitLog(userInfo, itemInfo, data.unitType, data.defaultAmount);
+					});
+				}
+
 				// If we made it here, everything was successful 
 				common.returnJsonResponse(socket, {
 					success: true
@@ -238,6 +249,48 @@ module.exports = {
 			var deferred = Q.defer();
 			user.update(json, null, deferred.makeNodeResolver());
 			return deferred.promise;
+		}
+
+		function getFoodUnitID(userInfo, item_id) {
+			var deferred = Q.defer();
+			var client = new Client();
+	        var fitbitUnitRequestURL = "https://api.fitbit.com/1/foods/" + item_id + ".json";
+
+	        var args = {
+				headers: {"Authorization": "Bearer " + userInfo.access_token} // request headers 
+			};
+
+			client.get(fitbitUnitRequestURL, args, function(data, result) {
+				var units = {
+					unitType: data.food.defaultUnit.id,
+					defaultAmount: data.food.defaultServingSize
+				};
+				deferred.resolve(units);  // fulfills the promise with 'units' as the value
+			});
+			return deferred.promise;
+		}
+
+		function addToFitbitLog(userInfo, itemInfo, unit_type, default_amount) {
+			var deferred = Q.defer();
+			var client = new Client();
+            var fitbitFoodLogRequestURL = "https://api.fitbit.com/1/user/" + userInfo.user_id + "/foods/log.json";
+
+            var args = {
+            	data: { 
+            		foodId: itemInfo.item_id,
+                    mealTypeId: "7",
+                    unitId: unit_type,
+                    amount: default_amount * itemInfo.servings,
+                    date: getDate() 
+                },
+            	headers: {
+            		"Content-Type": "application/json",
+            		"Authorization": "Bearer " + userInfo.access_token} // request headers 
+            };
+
+            client.post(fitbitFoodLogRequestURL, args, function(data, result) {
+            	deferred.resolve(data);
+            });
 		}
 
 	}  // End purchase() 

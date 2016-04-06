@@ -17,9 +17,8 @@
     "start-on-server": "node src/server.js > /var/log/vendfit/normal.log 2> /var/log/vendfit/error.log &"
   },
   "dependencies": {
-    "fifo": "^2.3.0",
     "mysql": "*",
     "net": "*",
-    "q": "^1.4.1"
+    "node-rest-client": "^1.8.0"
   }
 }
