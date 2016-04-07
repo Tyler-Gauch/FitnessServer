@@ -48,7 +48,7 @@ CREATE TABLE `item` (
 
 LOCK TABLES `item` WRITE;
 /*!40000 ALTER TABLE `item` DISABLE KEYS */;
-INSERT INTO `item` VALUES (21675,0,'Water',2000,0,0,0,0,0,0,0,1.00, "https://erinkim2011.files.wordpress.com/2011/06/lg_ko_dasani_bottle.jpg"),(14666422,1,'Gatorade Strawberry Kiwi',3500,60,14,14,0,0,0,110,2.50, "http://www.pepsicobeveragefacts.com/content/image/products/G_StrawWater_32.png"),(14666435,2,'Gatorade Cool Blue',3500,60,14,14,0,0,0,110,2.50,"https://happyspeedy.com/sites/default/files/gatorade-cool-blue-28oz06042015.jpg");
+INSERT INTO `item` VALUES (21675,0,'Water',2000,0,0,0,0,0,0,0,1.00, "https://erinkim2011.files.wordpress.com/2011/06/lg_ko_dasani_bottle.jpg"),(692070356,1,'Gatorade Fruit Punch',3500,80,21,21,0,0,0,160,1, "http://www.pepsicobeveragefacts.com/content/image/products/G_StrawWater_32.png"),(692070453,2,'Gatorade Lemon Lime',3500,80,21,21,0,0,0,160,1,"https://happyspeedy.com/sites/default/files/gatorade-cool-blue-28oz06042015.jpg");
 /*!40000 ALTER TABLE `item` ENABLE KEYS */;
 UNLOCK TABLES;
 
