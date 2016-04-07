@@ -174,7 +174,7 @@ module.exports = {
 				}
 				socketInfo.queue.push("d"+vendingItemInfo.dispenser+vendingItemInfo.vend_id+paddedStock);
 				Q.allSettled([
-					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
+					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.despenser, vendingItemInfo.stock - 1),
 					updateUser({id: user_id,
 								steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
 				]).then(function (results) {
