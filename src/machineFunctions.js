@@ -29,9 +29,6 @@ module.exports = {
 						for(var i = 0; i < result2.length; i++)
 						{
 							var paddedStock = result2[i].stock;
-							if(result2[i].stock < 100){
-								paddedStock = "0"+paddedStock;
-							}
 							if(result2[i].stock < 10){
 								paddedStock = "0"+paddedStock;
 							}

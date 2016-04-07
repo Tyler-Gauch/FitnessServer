@@ -19,7 +19,7 @@
 -- Table structure for table `item`
 --
 
-USE vendift;
+USE vendfit;
 
 DROP TABLE IF EXISTS `item`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -48,7 +48,7 @@ CREATE TABLE `item` (
 
 LOCK TABLES `item` WRITE;
 /*!40000 ALTER TABLE `item` DISABLE KEYS */;
-INSERT INTO `item` VALUES (21675,0,'Water',2000,0,0,0,0,0,0,0,1.00, "https://erinkim2011.files.wordpress.com/2011/06/lg_ko_dasani_bottle.jpg"),(5473583,1,'Gatorade G2 - Fruit Punch',3500,60,14,14,0,0,0,110,2.50, "http://www.pepsicobeveragefacts.com/content/image/products/G_StrawWater_32.png"),(14666435,2,'Gatorade G2 - Lemon Lime',3500,60,14,14,0,0,0,110,2.50,"https://happyspeedy.com/sites/default/files/gatorade-cool-blue-28oz06042015.jpg");
+INSERT INTO `item` VALUES (21675,0,'Water',2000,0,0,0,0,0,0,0,1.00, "https://erinkim2011.files.wordpress.com/2011/06/lg_ko_dasani_bottle.jpg"),(692070356,1,'Gatorade Fruit Punch',3500,80,21,21,0,0,0,160,1, "http://www.pepsicobeveragefacts.com/content/image/products/G_StrawWater_32.png"),(692070453,2,'Gatorade Lemon Lime',3500,80,21,21,0,0,0,160,1,"https://happyspeedy.com/sites/default/files/gatorade-cool-blue-28oz06042015.jpg");
 /*!40000 ALTER TABLE `item` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -79,7 +79,11 @@ CREATE TABLE `item_vending_machine` (
 
 LOCK TABLES `item_vending_machine` WRITE;
 /*!40000 ALTER TABLE `item_vending_machine` DISABLE KEYS */;
+<<<<<<< HEAD
 INSERT INTO `item_vending_machine` VALUES (1,21675,1,8,0),(2,14666435,1,10,1),(4,5473583,1,10,2);
+=======
+INSERT INTO `item_vending_machine` VALUES (1,21675,1,8,0),(2,692070356,1,10,1),(3,692070453,1,10,2);
+>>>>>>> ae1161408a71854451c6592b2b2c9ba1d0b33dde
 /*!40000 ALTER TABLE `item_vending_machine` ENABLE KEYS */;
 UNLOCK TABLES;
 

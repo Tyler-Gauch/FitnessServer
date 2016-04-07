@@ -225,7 +225,7 @@ module.exports = {
 
 		function getVendingItemInfo(vending_machine_id, item_id) {
 			var deferred = Q.defer();
-			var query = "SELECT iv.id, iv.item_id, iv.vending_machine_id, iv.stock, v.identifier, i.vend_id, iv.dispenser FROM item_vending_machine iv INNER JOIN vending_machine v ON iv.vending_machine_id = v.id INNER JOIN item i ON i.id = iv.item_id WHERE vending_machine_id = '" + data.vending_machine_id + "' AND item_id = '" + data.item_id + "' ORDER BY iv.stock GROUP BY iv.item_id LIMIT 1";
+			var query = "SELECT iv.id, iv.item_id, iv.vending_machine_id, iv.stock, v.identifier, i.vend_id, iv.dispenser FROM item_vending_machine iv INNER JOIN vending_machine v ON iv.vending_machine_id = v.id INNER JOIN item i ON i.id = iv.item_id WHERE vending_machine_id = '" + data.vending_machine_id + "' AND item_id = '" + data.item_id + "' GROUP BY iv.item_id ORDER BY iv.stock LIMIT 1";
 			common.connection.query(query, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
