@@ -79,7 +79,7 @@ CREATE TABLE `item_vending_machine` (
 
 LOCK TABLES `item_vending_machine` WRITE;
 /*!40000 ALTER TABLE `item_vending_machine` DISABLE KEYS */;
-INSERT INTO `item_vending_machine` VALUES (1,21675,1,8,0),(2,14666435,1,10,1),(4,14666422,1,10,2);
+INSERT INTO `item_vending_machine` VALUES (1,21675,1,8,0),(2,692070356,1,10,1),(3,692070453,1,10,2);
 /*!40000 ALTER TABLE `item_vending_machine` ENABLE KEYS */;
 UNLOCK TABLES;
 
