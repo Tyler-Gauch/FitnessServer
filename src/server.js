@@ -32,39 +32,45 @@ var server = net.createServer(function(socket){
 });
 
 var handleMachineSocket = function(socket, time){
-	var currentTime = Math.floor(Date.now() / 1000);//current time in seconds
-	if(common.checkValue(time) == null){
-		time = currentTime;
-	}
-
-	var socketInfo = machine.sockets[socket.identifier];
-
-	if(!socket.writable || socketInfo.disconnect)
-	{
-		socketInfo.disconnect = true;
-		return;
-	}
-
-	if(!socketInfo.queue.isEmpty())
-	{
-		var cmd = socketInfo.queue.shift();
-		if(cmd.indexOf("v") > -1 && socketInfo.waitingForVendResponse){
-			console.log("Sending Vend Command: " + cmd + " to " + socket.identifier);
-			socket.write(cmd+"\n");	
-		}else if(cmd.indexOf("v") == -1){
-			console.log("Sending: " + cmd + " to " + socket.identifier);
-			socket.write(cmd+"\n");
+	try{
+		var currentTime = Math.floor(Date.now() / 1000);//current time in seconds
+		if(common.checkValue(time) == null){
+			time = currentTime;
 		}
-	}else if(currentTime - time > 10)//checkin time
-	{
-		socketInfo.queue.push("c");
-		time = currentTime;
+	
+		var socketInfo = machine.sockets[socket.identifier];
+	
+		if(!socket.writable || socketInfo.disconnect)
+		{
+			socketInfo.disconnect = true;
+			return;
+		}
+	
+		if(!socketInfo.queue.isEmpty())
+		{
+			var cmd = socketInfo.queue.shift();
+			if(cmd.indexOf("v") > -1 && socketInfo.waitingForVendResponse){
+				console.log("Sending Vend Command: " + cmd + " to " + socket.identifier);
+				socket.write(cmd+"\n");	
+			}else if(cmd.indexOf("v") == -1){
+				console.log("Sending: " + cmd + " to " + socket.identifier);
+				socket.write(cmd+"\n");
+			}
+		}else if(currentTime - time > 10)//checkin time
+		{
+			socketInfo.queue.push("c");
+			time = currentTime;
+		}
+	
+	
+		setTimeout(function(){
+			handleMachineSocket(socket, time);
+		}, 100);
+
+	}catch(e){
+		console.error("Error in machine socket");
+		console.error(e);
 	}
-
-
-	setTimeout(function(){
-		handleMachineSocket(socket, time);
-	}, 100)
 }
 
 var port = 8888;
