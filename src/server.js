@@ -197,7 +197,7 @@ var processInput = function(data, socket){
 		console.error("Invalid JSON");
 		console.error(data);
 		console.error("ERROR:");
-		console.error(e);
+		console.error(e, e.stack.split("\n"));
 		var json = {success: false, message: "Invalid Json"};
 		//scommon.END Response
 		common.returnJsonResponse(socket, json, common.HttpCode.OK);

@@ -5,7 +5,7 @@ module.exports = {
 	sockets: {},
 
 	registration: function(data, socket){
-
+		console.log("Running registration");
 		console.log(data);
 
 		var query = "INSERT INTO vending_machine (identifier, last_checkin_date) ";
