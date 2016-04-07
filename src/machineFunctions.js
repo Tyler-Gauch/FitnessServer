@@ -12,14 +12,14 @@ module.exports = {
 			query += "VALUES ('"+data.identifier+"', NOW()) ";
 			query += "ON DUPLICATE KEY UPDATE last_checkin_date=NOW()";
 
-		common.connection.query(query, function(err, result){
+		common.connection.query(query, (function(err, result){
 			console.log(result);
 			if(err){
 				console.error("Error registering vending machine");
 				console.error(err);
 			}else{
 				console.log("Vending machine "+data.identifier+" registered");
-				common.connection.query("SELECT iv.*, i.* FROM item_vending_machine iv INNER JOIN item i ON i.id=iv.item_id WHERE vending_machine_id="+result.insertId, function(err2, result2){
+				common.connection.query("SELECT iv.*, i.* FROM item_vending_machine iv INNER JOIN item i ON i.id=iv.item_id WHERE vending_machine_id="+result.insertId, (function(err2, result2){
 					console.log(result2);
 					if(err2){
 						console.error("Error getting stock counts");
@@ -35,12 +35,12 @@ module.exports = {
 							if(result2[i].stock < 10){
 								paddedStock = "0"+paddedStock;
 							}
-							socket.queue.push("d"+result2[i].vend_id+paddedStock);
+							this.sockets[socket.identifier].queue.push("d"+result2[i].vend_id+paddedStock);
 						}
 					}
-				});
+				}).bind(this));
 			}
-		});
+		}).bind(this));
 	},
 
 	checkin: function(data){

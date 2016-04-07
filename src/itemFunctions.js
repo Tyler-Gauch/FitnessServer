@@ -137,13 +137,24 @@ module.exports = {
 			// Vend then on response,
 				// Update stock count
 				// Update user steps taken today
+			var socketInfo = common.checkValue(machine.sockets[vendingItemInfo.identifier]);
+			if(socketInfo == null || socketInfo.disconnect == true){
+				console.log("vending machine not connected");
+				common.returnJsonResponse(socket, {
+					success: false,
+					message: "Vending Machine is not connected"
+				}, common.HttpCode.OK);
+				return;
+			}
+	
 
-			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
-			machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = true;
 
-			machine.sockets[vendingItemInfo.identifier].onVendResponse = function(response){
+			socketInfo.queue.push("v"+vendingItemInfo.vend_id);
+			socketInfo.waitingForVendResponse = true;
 
-			machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = false;
+			socketInfo.onVendResponse = function(response){
+
+			socketInfo.waitingForVendResponse = false;
 
 				if(!response.success)
 				{
@@ -163,7 +174,7 @@ module.exports = {
 				if(vendingItemInfo.stock < 10){
 					paddedStock = "0"+paddedStock;
 				}
-				machine.sockets[vendingItemInfo.identifier].queue.push("d"+vendingItemInfo.vend_id+paddedStock);
+				socketInfo.queue.push("d"+vendingItemInfo.vend_id+paddedStock);
 				Q.allSettled([
 					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
 					updateUser({id: user_id,

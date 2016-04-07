@@ -26,7 +26,7 @@ var server = net.createServer(function(socket){
 		if(!socket.isHttp && socket.identifier != null)
 		{
 			console.log(socket.identifier + " disconnected.");
-			delete machine.sockets[socket.identifier];
+			machine.sockets[socket.identifier].disconnect = true;
 		}
 	});
 });
@@ -39,8 +39,9 @@ var handleMachineSocket = function(socket, time){
 
 	var socketInfo = machine.sockets[socket.identifier];
 
-	if(!socket.writable())
+	if(!socket.writable || socketInfo.disconnect)
 	{
+		socketInfo.disconnect = true;
 		return;
 	}
 
@@ -63,7 +64,7 @@ var handleMachineSocket = function(socket, time){
 
 	setTimeout(function(){
 		handleMachineSocket(socket, time);
-	}, 1000)
+	}, 100)
 }
 
 var port = 8888;
@@ -164,14 +165,15 @@ var processInput = function(data, socket){
 			{
 				if(json.data.identifier != null)
 				{
-					var socketInfo = machine.sockets[json.data.identifier];
+					var socketInfo = common.checkValue(machine.sockets[json.data.identifier]);
 					if(socketInfo == null)
 					{
 						socketInfo = {};
-						socket.identifier = json.data.identifier;
 						socketInfo.queue = queue();
 					}
+					socket.identifier = json.data.identifier;
 					socketInfo.socket = socket;
+					socketInfo.disconnect = false;
 					machine.sockets[socket.identifier] = socketInfo;
 					handleMachineSocket(socket);
 					machine.registration(json.data, socket);
@@ -184,7 +186,7 @@ var processInput = function(data, socket){
 					machine.checkin(json.data);
 				}
 			}else if(json.operation == "machine_vend_response"){
-				socket.onVendResponse(json.data);
+				machine.sockets[socket.identifier].onVendResponse(json.data);
 			}
 		}
 		else
