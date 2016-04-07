@@ -16,9 +16,10 @@ module.exports = {
 			return;
 		}
 
-		var query = "SELECT i.id, i.name, i.cost, i.calories, i.sugars, i.carbs, i.saturated_fat, i.trans_fat, i.protein, i.sodium, i.servings, i.pic, m.stock";
+		var query = "SELECT i.id, i.name, i.cost, i.calories, i.sugars, i.carbs, i.saturated_fat, i.trans_fat, i.protein, i.sodium, i.servings, i.pic, SUM(m.stock) as stock";
 			query += " FROM item AS i, item_vending_machine AS m";
 			query += " WHERE m.vending_machine_id ='" + data.id + "'" + " AND i.id = m.item_id";
+			query += " GROUP BY m.item_id;";
 		common.connection.query(query, function(err, result){
 			if(err)
 			{
@@ -149,7 +150,7 @@ module.exports = {
 	
 
 
-			socketInfo.queue.push("v"+vendingItemInfo.vend_id);
+			socketInfo.queue.push("v"+vendingItemInfo.dispenser);
 			socketInfo.waitingForVendResponse = true;
 
 			socketInfo.onVendResponse = function(response){
@@ -168,13 +169,10 @@ module.exports = {
 
 				//need the stock in a 000 format
 				var paddedStock = vendingItemInfo.stock;
-				if(vendingItemInfo.stock < 100){
-					paddedStock = "0"+paddedStock;
-				}
 				if(vendingItemInfo.stock < 10){
 					paddedStock = "0"+paddedStock;
 				}
-				socketInfo.queue.push("d"+vendingItemInfo.vend_id+paddedStock);
+				socketInfo.queue.push("d"+vendingItemInfo.dispenser+vendingItemInfo.vend_id+paddedStock);
 				Q.allSettled([
 					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
 					updateUser({id: user_id,
@@ -227,14 +225,14 @@ module.exports = {
 
 		function getVendingItemInfo(vending_machine_id, item_id) {
 			var deferred = Q.defer();
-			var query = "SELECT iv.id, iv.item_id, iv.vending_machine_id, iv.stock, v.identifier, i.vend_id FROM item_vending_machine iv INNER JOIN vending_machine v ON iv.vending_machine_id = v.id INNER JOIN item i ON i.id = iv.item_id WHERE vending_machine_id = '" + data.vending_machine_id + "' AND item_id = '" + data.item_id + "'";
+			var query = "SELECT iv.id, iv.item_id, iv.vending_machine_id, iv.stock, v.identifier, i.vend_id, iv.dispenser FROM item_vending_machine iv INNER JOIN vending_machine v ON iv.vending_machine_id = v.id INNER JOIN item i ON i.id = iv.item_id WHERE vending_machine_id = '" + data.vending_machine_id + "' AND item_id = '" + data.item_id + "' ORDER BY iv.stock GROUP BY iv.item_id LIMIT 1";
 			common.connection.query(query, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
 
-		function updateItemStockCount(vending_machine_id, item_id, stock) {
+		function updateItemStockCount(vending_machine_id, item_id, dispenser, stock) {
 			var deferred = Q.defer();
-			var query = "UPDATE vendfit.item_vending_machine SET stock='" + stock + "' WHERE item_id='"+item_id+"' AND vending_machine_id='" + vending_machine_id + "'";
+			var query = "UPDATE vendfit.item_vending_machine SET stock='" + stock + "' WHERE item_id='"+item_id+"' AND vending_machine_id='" + vending_machine_id + "' AND dispenser='"+dispenser+"'";
 			common.connection.query(query, deferred.makeNodeResolver());
 			return deferred.promise;
 		}

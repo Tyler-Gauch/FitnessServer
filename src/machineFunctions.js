@@ -35,7 +35,7 @@ module.exports = {
 							if(result2[i].stock < 10){
 								paddedStock = "0"+paddedStock;
 							}
-							this.sockets[socket.identifier].queue.push("d"+result2[i].vend_id+paddedStock);
+							this.sockets[socket.identifier].queue.push("d"+result2[i].dispenser+result2[i].vend_id+paddedStock);
 						}
 					}
 				}).bind(this));
