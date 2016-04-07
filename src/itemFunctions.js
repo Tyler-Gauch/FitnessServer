@@ -1,51 +1,8 @@
-// Q.all([
-// 	this.queryForCost(data.item_id),
-// 	//queryForPoints()
-// 	]).then(function(results) {
-// 		// costResult will be the first row returned from the cost
-// 		var costResult = common.checkValue(results[0][0][0])  // last [0] for 1st row only. Gives array even if only 1 row returned
-
-
-// 		// results[function - by order of array under all][all rows][ith returned row]
-// 		var cost = null;
-
-// 		if (costResult != null) {
-// 			cost = costResult.cost;
-// 		}
-		
-// 	});
-
-
-// 	queryForCost: function(id) {
-// 		var defered = Q.defer();
-// 		common.connection.query(...., defered.makeNodeResolver());
-// 		return defered.promise;
-// 	}
-
-
-
-// function a() {
-// 	function b() {
-// 		function c() {
-
-// 		}
-// 	}
-// }
-
-// ==
-
-// Q.all([
-// 	a(),
-// 	b(),
-// 	c()
-// ]).then(function(results) {
-
-// });
-
-var common = require("./common.js")();
-var user   = require("./userFunctions");
+var common  = require("./common.js")();
+var user    = require("./userFunctions");
 var machine = require("./machineFunctions");
-var Q      = require("q");
+var Q       = require("q");
+var Client  = require('node-rest-client').Client;
 
 module.exports = {
 	viewall: function(data, socket)
@@ -59,7 +16,7 @@ module.exports = {
 			return;
 		}
 
-		var query = "SELECT i.id, i.name, i.cost, i.calories, i.sugars, i.carbs, i.saturated_fat, i.trans_fat, i.protein, i.sodium, i.servings, m.stock";
+		var query = "SELECT i.id, i.name, i.cost, i.calories, i.sugars, i.carbs, i.saturated_fat, i.trans_fat, i.protein, i.sodium, i.servings, i.pic, m.stock";
 			query += " FROM item AS i, item_vending_machine AS m";
 			query += " WHERE m.vending_machine_id ='" + data.id + "'" + " AND i.id = m.item_id";
 		common.connection.query(query, function(err, result){
@@ -175,19 +132,18 @@ module.exports = {
 				return;
 			}
 
-			// TODO //
-			// Vend
+
+			
+			// Vend then on response,
 				// Update stock count
 				// Update user steps taken today
-
-			// TODO - Vend here and perform below AFTER receive success message from vend
 
 			machine.sockets[vendingItemInfo.identifier].queue.push("v"+vendingItemInfo.vend_id);
 			machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = true;
 
 			machine.sockets[vendingItemInfo.identifier].onVendResponse = function(response){
 
-				machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = false;
+			machine.sockets[vendingItemInfo.identifier].waitingForVendResponse = false;
 
 				if(!response.success)
 				{
@@ -197,6 +153,17 @@ module.exports = {
 					return;
 				}
 				// Update stock count and update user steps taken today
+				// Update stock count and update user steps taken today
+
+				//need the stock in a 000 format
+				var paddedStock = vendingItemInfo.stock;
+				if(vendingItemInfo.stock < 100){
+					paddedStock = "0"+paddedStock;
+				}
+				if(vendingItemInfo.stock < 10){
+					paddedStock = "0"+paddedStock;
+				}
+				machine.sockets[vendingItemInfo.identifier].queue.push("d"+vendingItemInfo.vend_id+paddedStock);
 				Q.allSettled([
 					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.stock - 1),
 					updateUser({id: user_id,
@@ -215,6 +182,16 @@ module.exports = {
 							return;
 						}
 					});
+
+
+					/////////////////////////////////////////////////////////////
+					// Add item to fitbit food log if desired
+					/////////////////////////////////////////////////////////////
+					if (common.checkValue(data.addToLog) == true) {
+						getFoodUnitID(userInfo, data.item_id).then( function(data) {
+							addToFitbitLog(userInfo, itemInfo, data.unitType, data.defaultAmount);
+						});
+					}
 
 					// If we made it here, everything was successful 
 					common.returnJsonResponse(socket, {
@@ -255,6 +232,48 @@ module.exports = {
 			var deferred = Q.defer();
 			user.update(json, null, deferred.makeNodeResolver());
 			return deferred.promise;
+		}
+
+		function getFoodUnitID(userInfo, item_id) {
+			var deferred = Q.defer();
+			var client = new Client();
+	        var fitbitUnitRequestURL = "https://api.fitbit.com/1/foods/" + item_id + ".json";
+
+	        var args = {
+				headers: {"Authorization": "Bearer " + userInfo.access_token} // request headers 
+			};
+
+			client.get(fitbitUnitRequestURL, args, function(data, result) {
+				var units = {
+					unitType: data.food.defaultUnit.id,
+					defaultAmount: data.food.defaultServingSize
+				};
+				deferred.resolve(units);  // fulfills the promise with 'units' as the value
+			});
+			return deferred.promise;
+		}
+
+		function addToFitbitLog(userInfo, itemInfo, unit_type, default_amount) {
+			var deferred = Q.defer();
+			var client = new Client();
+            var fitbitFoodLogRequestURL = "https://api.fitbit.com/1/user/" + userInfo.user_id + "/foods/log.json";
+
+            var args = {
+            	data: { 
+            		foodId: itemInfo.item_id,
+                    mealTypeId: "7",
+                    unitId: unit_type,
+                    amount: default_amount * itemInfo.servings,
+                    date: getDate() 
+                },
+            	headers: {
+            		"Content-Type": "application/json",
+            		"Authorization": "Bearer " + userInfo.access_token} // request headers 
+            };
+
+            client.post(fitbitFoodLogRequestURL, args, function(data, result) {
+            	deferred.resolve(data);
+            });
 		}
 
 	}  // End purchase() 

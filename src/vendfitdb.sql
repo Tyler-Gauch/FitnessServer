@@ -25,7 +25,7 @@ DROP TABLE IF EXISTS `item`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `item` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `vend_id` int(11),
   `name` varchar(128) NOT NULL,
   `cost` int(11) NOT NULL,
@@ -37,8 +37,9 @@ CREATE TABLE `item` (
   `protein` int(11) DEFAULT NULL,
   `sodium` int(11) DEFAULT NULL,
   `servings` float(6,2) DEFAULT NULL,
+  `pic` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14666436 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -47,7 +48,7 @@ CREATE TABLE `item` (
 
 LOCK TABLES `item` WRITE;
 /*!40000 ALTER TABLE `item` DISABLE KEYS */;
-INSERT INTO `item` VALUES (21675,0,'Water',2000,0,0,0,0,0,0,0,1.00),(14666422,1,'Gatorade Strawberry Kiwi',3500,60,14,14,0,0,0,110,2.50),(14666435,2,'Gatorade Cool Blue',3500,60,14,14,0,0,0,110,2.50);
+INSERT INTO `item` VALUES (21675,0,'Water',2000,0,0,0,0,0,0,0,1.00, "https://l.facebook.com/l.php?u=https%3A%2F%2Ferinkim2011.files.wordpress.com%2F2011%2F06%2Flg_ko_dasani_bottle.jpg&h=7AQEyetUK"),(14666422,1,'Gatorade Strawberry Kiwi',3500,60,14,14,0,0,0,110,2.50, "http://l.facebook.com/l.php?u=http%3A%2F%2Fwww.pepsicobeveragefacts.com%2Fcontent%2Fimage%2Fproducts%2FG_StrawWater_32.png&h=7AQEyetUK"),(14666435,2,'Gatorade Cool Blue',3500,60,14,14,0,0,0,110,2.50,"https://l.facebook.com/l.php?u=https%3A%2F%2Fhappyspeedy.com%2Fsites%2Fdefault%2Ffiles%2Fgatorade-cool-blue-28oz06042015.jpg&h=7AQEyetUK");
 /*!40000 ALTER TABLE `item` ENABLE KEYS */;
 UNLOCK TABLES;
 

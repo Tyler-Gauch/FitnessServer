@@ -190,6 +190,10 @@ module.exports = {
 
 			var id = data.id;
 
+			// Create a copy of the data object since we need to delete the id
+			var data2 = JSON.parse(JSON.stringify(data));
+			delete data2.id;
+
 			// Get the last date the step count was updated
 			// Now update the user
 			if (typeof(id) == 'number') {
@@ -215,22 +219,21 @@ module.exports = {
 					if (lastUpdated == null) {
 						lastUpdated = common.getDate();
 					}
-					lastUpdated = new Number(Date.parse(lastUpdated));
+					lastUpdated = Date.parse(lastUpdated);
 
-					var newDate = new Number(Date.parse(data.date_updated)); 
+					if (common.checkValue(data2.date_updated == null)) {
+						data2.date_updated = common.getDate();
+					}
 
+					var newDate = Date.parse(data2.date_updated); 
+					
 					console.log("Date received: " + newDate + ", last updated date on server: " + lastUpdated);
 					
-					var resetBalance = false;
-
 					if (lastUpdated > newDate || lastUpdated < newDate) {
 						console.log("Reseting balance");
-						var resetBalance = true;
+						data2.steps_spent_today = 0;
 					}
 
-					if (resetBalance) {
-						data.steps_spent_today = 0;
-					}
 
 					// Now update the user
 					if (typeof(id) == 'number') {
@@ -239,17 +242,17 @@ module.exports = {
 						var query = "UPDATE vendfit.user SET ? WHERE fitbit_id='"+id+"'";
 					}
 
-					if(common.checkValue(data.date_updated) == null)
+					if(common.checkValue(data2.date_updated) == null)
 					{
-						data.date_updated = new Date();
+						data2.date_updated = common.getDate();
 					}					
 
 					if (callback) {
-						common.connection.query(query, data, callback);
+						common.connection.query(query, data2, callback);
 						return;
 					}
 
-					common.connection.query(query, data, (function(err, result){
+					common.connection.query(query, data2, (function(err, result){
 						if(err)
 						{
 							console.error("Mysql Error");
@@ -261,7 +264,7 @@ module.exports = {
 						}else
 						{
 							console.log(result);
-							this.viewall(data, socket, null);
+							this.viewall(data, socket, null);  // Send the original data object (with the ID) to the viewall() function
 						}
 					}).bind(this));
 				}
