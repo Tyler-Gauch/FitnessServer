@@ -124,7 +124,7 @@ CREATE TABLE `vending_machine` (
   `identifier` varchar(64) NOT NULL UNIQUE,	
   `state` int(11) DEFAULT NULL,
   `last_checkin_date` datetime DEFAULT NULL,
-  `ip_address` varchar(32),
+  `ip` varchar(32),
   PRIMARY KEY (`id`),
   UNIQUE KEY vending_machine_identifier_unique(`identifier`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
@@ -136,7 +136,7 @@ CREATE TABLE `vending_machine` (
 
 LOCK TABLES `vending_machine` WRITE;
 /*!40000 ALTER TABLE `vending_machine` DISABLE KEYS */;
-INSERT INTO `vending_machine` VALUES (1,'vendfit_machine_1',1,'2016-03-11 18:17:25');
+INSERT INTO `vending_machine` VALUES (1,'vendfit_machine_1',1,'2016-03-11 18:17:25', '0.0.0.0');
 /*!40000 ALTER TABLE `vending_machine` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
