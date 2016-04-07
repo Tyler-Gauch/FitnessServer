@@ -124,6 +124,7 @@ CREATE TABLE `vending_machine` (
   `identifier` varchar(64) NOT NULL UNIQUE,	
   `state` int(11) DEFAULT NULL,
   `last_checkin_date` datetime DEFAULT NULL,
+  `ip_address` varchar(32),
   PRIMARY KEY (`id`),
   UNIQUE KEY vending_machine_identifier_unique(`identifier`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
