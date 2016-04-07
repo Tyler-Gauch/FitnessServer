@@ -23,10 +23,10 @@ var server = net.createServer(function(socket){
 	});
 
 	socket.on("end", function(){
-		if(!socket.isHttp && socket.identifer != null)
+		if(!socket.isHttp && socket.identifier != null)
 		{
-			console.log(socket.identifer + " disconnected.");
-			delete machine.sockets[socket.identifer];
+			console.log(socket.identifier + " disconnected.");
+			delete machine.sockets[socket.identifier];
 		}
 	});
 });
@@ -37,12 +37,18 @@ var handleMachineSocket = function(socket, time){
 		time = currentTime;
 	}
 
-	if(!socket.queue.isEmpty())
+	var socketInfo = machine.sockets[socket.identifier];
+
+	if(!socket.writable())
 	{
-		var cmd = socket.queue.shift();
-		if(cmd.indexOf("v") > -1 && socket.waitingForVendResponse){
+		return;
+	}
+
+	if(!socketInfo.queue.isEmpty())
+	{
+		var cmd = socketInfo.queue.shift();
+		if(cmd.indexOf("v") > -1 && socketInfo.waitingForVendResponse){
 			console.log("Sending Vend Command: " + cmd + " to " + socket.identifier);
-			socket.queue.push(cmd);
 			socket.write(cmd+"\n");	
 		}else if(cmd.indexOf("v") == -1){
 			console.log("Sending: " + cmd + " to " + socket.identifier);
@@ -50,7 +56,7 @@ var handleMachineSocket = function(socket, time){
 		}
 	}else if(currentTime - time > 10)//checkin time
 	{
-		socket.queue.push("c");
+		socketInfo.queue.push("c");
 		time = currentTime;
 	}
 
@@ -158,14 +164,15 @@ var processInput = function(data, socket){
 			{
 				if(json.data.identifier != null)
 				{
-					socket.identifier = json.data.identifier;
-					socket.queue = queue();
-					var otherSocket = machine.sockets[socket.identifier];
-					if(otherSocket != null)
+					var socketInfo = machine.sockets[json.data.identifier];
+					if(socketInfo == null)
 					{
-						otherSocket.end();
+						socketInfo = {};
+						socket.identifier = json.data.identifier;
+						socketInfo.queue = queue();
 					}
-					machine.sockets[socket.identifier] = socket;
+					socketInfo.socket = socket;
+					machine.sockets[socket.identifier] = socketInfo;
 					handleMachineSocket(socket);
 					machine.registration(json.data, socket);
 				}
