@@ -8,9 +8,9 @@ module.exports = {
 		console.log("Running registration");
 		console.log(data);
 
-		var query = "INSERT INTO vending_machine (identifier, last_checkin_date) ";
-			query += "VALUES ('"+data.identifier+"', NOW()) ";
-			query += "ON DUPLICATE KEY UPDATE last_checkin_date=NOW()";
+		var query = "INSERT INTO vending_machine (identifier, ip, last_checkin_date) ";
+			query += "VALUES ('"+data.identifier+"', '"+data.ip+"', NOW()) ";
+			query += "ON DUPLICATE KEY UPDATE last_checkin_date=NOW(), ip='"+data.ip+"'";
 
 		common.connection.query(query, (function(err, result){
 			console.log(result);
@@ -18,7 +18,7 @@ module.exports = {
 				console.error("Error registering vending machine");
 				console.error(err);
 			}else{
-				console.log("Vending machine "+data.identifier+" registered");
+				console.log("Vending machine "+data.identifier+" registered with local ip "+data.ip);
 				common.connection.query("SELECT iv.*, i.* FROM item_vending_machine iv INNER JOIN item i ON i.id=iv.item_id WHERE vending_machine_id="+result.insertId, (function(err2, result2){
 					console.log(result2);
 					if(err2){
