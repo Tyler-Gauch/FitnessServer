@@ -176,7 +176,8 @@ module.exports = {
 				Q.allSettled([
 					updateItemStockCount(vendingItemInfo.id, vendingItemInfo.stock - 1),
 					updateUser({id: user_id,
-								steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
+								steps_spent_today: userInfo.steps_spent_today + itemInfo.cost,
+								date_updated: data.date_updated})
 				]).then(function (results) {
 					results.forEach(function (result) {
 						if (result.state === "fulfilled") {
@@ -197,9 +198,11 @@ module.exports = {
 					// Add item to fitbit food log if desired
 					/////////////////////////////////////////////////////////////
 					if (common.checkValue(data.addToLog) == true) {
-						getFoodUnitID(userInfo, data.item_id).then( function(data) {
-							addToFitbitLog(userInfo, itemInfo, data.unitType, data.defaultAmount);
-						});
+						console.log("Starting add to log process");
+						getFoodUnitID(userInfo, data.item_id).then( function(foodData) {
+							console.log("Returned with: ", foodData);
+							addToFitbitLog(userInfo, itemInfo, foodData.unitType, foodData.defaultAmount, data.date_updated);
+						}).done();
 					}
 
 					// If we made it here, everything was successful 
@@ -219,7 +222,7 @@ module.exports = {
 
 		function getItemCost(item_id) {
 			var deferred = Q.defer();
-			common.connection.query("SELECT cost from item where id = '" + item_id + "'", deferred.makeNodeResolver());
+			common.connection.query("SELECT * from item where id = '" + item_id + "'", deferred.makeNodeResolver());
 			return deferred.promise;
 		}
 
@@ -232,18 +235,20 @@ module.exports = {
 
 		function updateItemStockCount(id, stock) {
 			var deferred = Q.defer();
-			var query = "UPDATE vendfit.item_vending_machine SET stock=" + stock + " WHERE id="id;
+			var query = "UPDATE vendfit.item_vending_machine SET stock=" + stock + " WHERE id="+id;
 			common.connection.query(query, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
 
 		function updateUser(json) {
+			console.log(json);
 			var deferred = Q.defer();
 			user.update(json, null, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
 
 		function getFoodUnitID(userInfo, item_id) {
+			console.log("Getting food id");
 			var deferred = Q.defer();
 			var client = new Client();
 	        var fitbitUnitRequestURL = "https://api.fitbit.com/1/foods/" + item_id + ".json";
@@ -252,35 +257,44 @@ module.exports = {
 				headers: {"Authorization": "Bearer " + userInfo.access_token} // request headers 
 			};
 
+
+			console.log("Sending args: ", args);
 			client.get(fitbitUnitRequestURL, args, function(data, result) {
 				var units = {
 					unitType: data.food.defaultUnit.id,
 					defaultAmount: data.food.defaultServingSize
 				};
+				console.log("has unit");
+				console.log(units);
 				deferred.resolve(units);  // fulfills the promise with 'units' as the value
 			});
 			return deferred.promise;
 		}
 
-		function addToFitbitLog(userInfo, itemInfo, unit_type, default_amount) {
+		function addToFitbitLog(userInfo, itemInfo, unit_type, default_amount, date) {
+			console.log("Adding to diary");
 			var deferred = Q.defer();
 			var client = new Client();
-            var fitbitFoodLogRequestURL = "https://api.fitbit.com/1/user/" + userInfo.user_id + "/foods/log.json";
+            var fitbitFoodLogRequestURL = "https://api.fitbit.com/1/user/" + userInfo.fitbit_id + "/foods/log.json";
 
             var args = {
-            	data: { 
-            		foodId: itemInfo.item_id,
+            	parameters: { 
+            		foodId: itemInfo.id,
                     mealTypeId: "7",
                     unitId: unit_type,
                     amount: default_amount * itemInfo.servings,
-                    date: getDate() 
+                    date: date 
                 },
             	headers: {
             		"Content-Type": "application/json",
             		"Authorization": "Bearer " + userInfo.access_token} // request headers 
             };
 
+		console.log("Sending fitbit log args:", args, fitbitFoodLogRequestURL);
+
             client.post(fitbitFoodLogRequestURL, args, function(data, result) {
+		console.log("received", data);
+		console.log(data.toString());
             	deferred.resolve(data);
             });
 		}

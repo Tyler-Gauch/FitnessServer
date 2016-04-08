@@ -98,6 +98,7 @@ module.exports = {
 					}, common.HttpCode.OK);
 				}else
 				{
+					console.log("YOU BETTER FUCKING BE A 7");
 					console.log(result);
 					if(common.checkValue(result[0]) == null)
 					{
