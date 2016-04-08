@@ -49,9 +49,33 @@ module.exports = function(){
 			return value;
 		},
 
-		getDate: function() { // Get the current date in yyyy-mm-dd format
+		getDate: function(userID) { // Get the current date in yyyy-mm-dd format based on the user's timezone offset
 
-		    var today = new Date();
+			// First, get the offset
+			if (typeof(userID.id) == 'number') {
+				var query = "SELECT timezone_offset FROM user WHERE id="+id+" OR fitbit_id='" + id + "'";
+			} else {
+				var query = "SELECT timezone_offset FROM user WHERE fitbit_id='" + id + "'";
+			}
+
+			common.connection.query(query, (function(err, result) {
+				var today = new Date();
+				if(err)
+				{
+					// Send back the current system date
+					console.error("Mysql Error");
+					console.error(err);
+				} else {
+					// Modify 'today' based on the offset value
+					var systemTime = today.getTime();
+					var systemOffset = today.getTimezoneOffset() * 60000; // offset in milliseconds
+					var systemUTC = systemTime + systemOffset;
+
+					var userOffset = result[0].timezone_offset * 60000; // offset in milliseconds
+					today = new Date(systemUTC + userOffset);
+				}
+			}
+		    
 		    var dd = today.getDate();
 		    var mm = today.getMonth() + 1; // January is 0
 

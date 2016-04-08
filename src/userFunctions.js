@@ -135,7 +135,7 @@ module.exports = {
 		} else {
 
 			if (common.checkValue(data.date_updated) == null) {
-				data.date_updated = common.getDate();
+				data.date_updated = common.getDate(data.id);
 			}
 			data.total_steps = common.checkValue(data.total_steps, 0);
 			data.steps_spent_today = common.checkValue(data.steps_spent_today, 0);
@@ -218,12 +218,12 @@ module.exports = {
 					console.log(result);
 					var lastUpdated = common.checkValue(result[0].date_updated);
 					if (lastUpdated == null) {
-						lastUpdated = common.getDate();
+						lastUpdated = common.getDate(data.id);
 					}
 					lastUpdated = Date.parse(lastUpdated);
 
 					if (common.checkValue(data2.date_updated == null)) {
-						data2.date_updated = common.getDate();
+						data2.date_updated = common.getDate(data.id);
 					}
 
 					var newDate = Date.parse(data2.date_updated); 
@@ -245,7 +245,7 @@ module.exports = {
 
 					if(common.checkValue(data2.date_updated) == null)
 					{
-						data2.date_updated = common.getDate();
+						data2.date_updated = common.getDate(data.id);
 					}					
 
 					if (callback) {
