@@ -174,7 +174,7 @@ module.exports = {
 				}
 				socketInfo.queue.push("d"+vendingItemInfo.dispenser+vendingItemInfo.vend_id+paddedStock);
 				Q.allSettled([
-					updateItemStockCount(vendingItemInfo.vending_machine_id, vendingItemInfo.item_id, vendingItemInfo.despenser, vendingItemInfo.stock - 1),
+					updateItemStockCount(vendingItemInfo.id, vendingItemInfo.stock - 1),
 					updateUser({id: user_id,
 								steps_spent_today: userInfo.steps_spent_today + itemInfo.cost})
 				]).then(function (results) {
@@ -230,9 +230,9 @@ module.exports = {
 			return deferred.promise;
 		}
 
-		function updateItemStockCount(vending_machine_id, item_id, dispenser, stock) {
+		function updateItemStockCount(id, stock) {
 			var deferred = Q.defer();
-			var query = "UPDATE vendfit.item_vending_machine SET stock='" + stock + "' WHERE item_id='"+item_id+"' AND vending_machine_id='" + vending_machine_id + "' AND dispenser='"+dispenser+"'";
+			var query = "UPDATE vendfit.item_vending_machine SET stock=" + stock + " WHERE id="id;
 			common.connection.query(query, deferred.makeNodeResolver());
 			return deferred.promise;
 		}
