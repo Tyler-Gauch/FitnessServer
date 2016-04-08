@@ -275,28 +275,55 @@ module.exports = {
 			console.log("Adding to diary");
 			var deferred = Q.defer();
 			var client = new Client();
-            var fitbitFoodLogRequestURL = "https://api.fitbit.com/1/user/" + userInfo.fitbit_id + "/foods/log.json";
 
-            var args = {
-            	parameters: { 
-            		foodId: itemInfo.id,
-                    mealTypeId: "7",
-                    unitId: unit_type,
-                    amount: default_amount * itemInfo.servings,
-                    date: date 
-                },
-            	headers: {
-            		"Content-Type": "application/json",
-            		"Authorization": "Bearer " + userInfo.access_token} // request headers 
-            };
 
-		console.log("Sending fitbit log args:", args, fitbitFoodLogRequestURL);
 
-            client.post(fitbitFoodLogRequestURL, args, function(data, result) {
-		console.log("received", data);
-		console.log(data.toString());
-            	deferred.resolve(data);
-            });
+			 // If the item is water, log as water. Otherwise, log it as food
+        	if (itemInfo.name.toLowerCase() === "water") {
+
+                var fitbitWaterURL = "https://api.fitbit.com/1/user/" + userInfo.fitbit_id + "/foods/log/water.json";
+
+                 var args = {
+	            	parameters: { 
+	                    amount: default_amount * itemInfo.servings,
+	                    date: date,
+	                    unit: "fl oz"
+	                },
+	            	headers: {
+	            		"Content-Type": "application/json",
+	            		"Authorization": "Bearer " + userInfo.access_token} // request headers 
+	            };
+
+	            client.post(fitbitFoodLogRequestURL, args, function(data, result) {
+					console.log("received", data);
+					console.log(data.toString());
+	            	deferred.resolve(data);
+	            });
+
+			} else {
+				var fitbitFoodLogRequestURL = "https://api.fitbit.com/1/user/" + userInfo.fitbit_id + "/foods/log.json";
+
+	            var args = {
+	            	parameters: { 
+	            		foodId: itemInfo.id,
+	                    mealTypeId: "7",
+	                    unitId: unit_type,
+	                    amount: default_amount * itemInfo.servings,
+	                    date: date 
+	                },
+	            	headers: {
+	            		"Content-Type": "application/json",
+	            		"Authorization": "Bearer " + userInfo.access_token} // request headers 
+	            };
+
+				console.log("Sending fitbit log args:", args, fitbitFoodLogRequestURL);
+
+	            client.post(fitbitFoodLogRequestURL, args, function(data, result) {
+					console.log("received", data);
+					console.log(data.toString());
+	            	deferred.resolve(data);
+	            });
+			}
 		}
 
 	}  // End purchase() 
