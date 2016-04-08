@@ -294,7 +294,7 @@ module.exports = {
 	            		"Authorization": "Bearer " + userInfo.access_token} // request headers 
 	            };
 
-	            client.post(fitbitFoodLogRequestURL, args, function(data, result) {
+	            client.post(fitbitWaterURL, args, function(data, result) {
 					console.log("received", data);
 					console.log(data.toString());
 	            	deferred.resolve(data);
